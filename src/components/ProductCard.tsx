@@ -21,18 +21,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         </span>
       )}
 
-      <div className="relative flex h-48 items-center justify-center overflow-hidden bg-[#0A0A0A]">
-        {product.imageUrl ? (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <MiniScooterSvg />
-        )}
+      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-[#0A0A0A]">        {product.imageUrl ? (
+        <Image
+          src={product.imageUrl}
+          alt={product.name}
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="object-contain p-4 transition-transform duration-300 group-hover:scale-105" />
+      ) : (
+        <MiniScooterSvg />
+      )}
       </div>
 
       <div className="flex flex-1 flex-col p-6">

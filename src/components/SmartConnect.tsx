@@ -82,15 +82,19 @@ export default function SmartConnect() {
 
 function PhoneMockup() {
   return (
-    <div className="relative mx-auto aspect-[9/19] w-64 overflow-hidden rounded-[2.5rem] border-4 border-[#111111] bg-[#0A0A0A] shadow-2xl">
-      <div className="absolute top-0 left-1/2 z-10 h-6 w-24 -translate-x-1/2 rounded-b-2xl bg-[#111111]" />
-      <div className="flex h-full flex-col p-6 pt-10">
-        <p className="text-center text-[10px] tracking-[0.2em] text-[#FF5A00]">
+    <div className="relative mx-auto aspect-[9/19] w-64 overflow-hidden rounded-[2.8rem] border-[5px] border-[#222222] bg-[#0A0A0A] shadow-[0_35px_70px_rgba(0,0,0,0.55)] transition-all duration-500 rotate-0 hover:rotate-[-3deg] hover:scale-105">
+      <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-br from-white/15 via-transparent to-transparent" />
+      <div className="absolute left-0 top-0 h-full w-[2px] bg-white/20" />
+      <div className="absolute right-0 top-0 h-full w-[2px] bg-black/40" />
+      <div className="absolute top-0 left-1/2 z-30 h-6 w-24 -translate-x-1/2 rounded-b-2xl bg-[#111111] shadow-lg" />
+      <div className="relative z-10 flex h-full flex-col p-6 pt-10">
+        <p className="text-center text-xs font-semibold tracking-[0.35em] uppercase text-[#FF7A1A] drop-shadow-[0_0_8px_rgba(255,90,0,0.6)]">
           TIGER E1
         </p>
-        <p className="mt-1 text-center font-display text-lg font-black text-white">
+        <p className="mt-2 text-center font-display text-2xl font-black tracking-wide text-white drop-shadow-lg">
           SMART CONNECT
         </p>
+        <div className="mx-auto mt-3 mb-6 h-[2px] w-16 rounded-full bg-gradient-to-r from-transparent via-[#FF5A00] to-transparent" />
 
         <div className="mt-8 flex justify-center">
           <div className="relative h-24 w-24">

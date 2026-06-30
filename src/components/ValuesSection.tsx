@@ -7,15 +7,15 @@ export default function ValuesSection() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {VALUES.map((value) => (
             <div key={value.title} className="text-center">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#FF5A00]">
-                <span className="text-xs font-black text-[#FF5A00]">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#FF5A00]">
+                <span className="text-xl font-black text-[#FF5A00]">
                   {value.title.charAt(0)}
                 </span>
               </div>
-              <h3 className="font-display text-sm font-black tracking-wider text-[#111111]">
+              <h3 className="font-display text-xl font-black tracking-wider text-[#111111]">
                 {value.title}
               </h3>
-              <p className="mt-1 text-xs text-[#7A7A7A]">{value.description}</p>
+              <p className="mt-1 text-base text-[#7A7A7A]">{value.description}</p>
             </div>
           ))}
         </div>

@@ -10,9 +10,8 @@ export default async function Hero() {
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#0A0A0A] pt-24">
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-1/4 left-0 h-px w-full bg-gradient-to-r from-transparent via-[#FF5A00] to-transparent" />
-        <div className="absolute top-1/2 left-0 h-px w-full bg-gradient-to-r from-transparent via-[#2B2B2B] to-transparent" />
-        <div className="absolute top-3/4 left-0 h-px w-full bg-gradient-to-r from-transparent via-[#FF5A00] to-transparent" />
+        <div className="absolute top-[22%] left-0 h-px w-full bg-gradient-to-r from-transparent via-[#FF5A00] to-transparent" />
+        <div className="absolute top-[88%] left-0 h-px w-full bg-gradient-to-r from-transparent via-[#FF5A00] to-transparent" />
       </div>
 
       <div className="relative mx-auto flex max-w-7xl flex-col items-center px-6 pt-16 pb-24 lg:flex-row lg:gap-16 lg:px-8 lg:pt-24">
