@@ -20,7 +20,9 @@ export async function PUT(request: Request) {
   try {
     await connectDB();
     const body = await request.json();
-    const existing = await SiteSettings.findOne({ key: "main" }).lean();
+    const existing = await SiteSettings.findOne({ key: "main" }).lean() as {
+      hiddenProductSlugs?: string[];
+    } | null;
     const hiddenProductSlugs =
       (existing?.hiddenProductSlugs as string[] | undefined) || [];
 
