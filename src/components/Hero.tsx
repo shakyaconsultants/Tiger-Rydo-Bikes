@@ -55,8 +55,9 @@ export default async function Hero() {
             alt="Tiger Rydo Scooter"
             width={700}
             height={700}
-            className="h-auto w-full max-w-xl object-contain"
             priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="h-auto w-full max-w-xl object-contain"
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import mongoose, { Schema, models, model, Model } from "mongoose";
 
 export interface ISiteSettings {
   key: string;
@@ -14,6 +14,9 @@ export interface ISiteSettings {
   heroSubtitle: string;
   accentColor: string;
   hiddenProductSlugs?: string[];
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const SiteSettingsSchema = new Schema<ISiteSettings>(
@@ -35,5 +38,6 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
   { timestamps: true }
 );
 
-export const SiteSettings =
-  models.SiteSettings || model<ISiteSettings>("SiteSettings", SiteSettingsSchema);
+export const SiteSettings: Model<ISiteSettings> =
+  (models.SiteSettings as Model<ISiteSettings>) ||
+  model<ISiteSettings>("SiteSettings", SiteSettingsSchema);

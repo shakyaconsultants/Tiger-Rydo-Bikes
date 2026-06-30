@@ -1,4 +1,4 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import mongoose, { Schema, models, model, Model } from "mongoose";
 
 export interface IProductParameter {
   label: string;
@@ -26,6 +26,9 @@ export interface IProduct {
   videoUrl: string;
   imageUrl?: string;
   batteryVariants: IBatteryVariant[];
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const ProductParameterSchema = new Schema<IProductParameter>(
@@ -62,7 +65,9 @@ const ProductSchema = new Schema<IProduct>(
   { timestamps: true }
 );
 
-export const Product = models.Product || model<IProduct>("Product", ProductSchema);
+export const Product: Model<IProduct> =
+  (models.Product as Model<IProduct>) ||
+  model<IProduct>("Product", ProductSchema);
 
 /** @deprecated Use Product model */
 export const Scooter = Product;

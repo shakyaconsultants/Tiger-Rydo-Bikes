@@ -1,4 +1,4 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import mongoose, { Schema, models, model, Model } from "mongoose";
 
 export interface IDealer {
   name: string;
@@ -11,6 +11,9 @@ export interface IDealer {
   state: string;
   pincode: string;
   isActive: boolean;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const DealerSchema = new Schema<IDealer>(
@@ -29,4 +32,6 @@ const DealerSchema = new Schema<IDealer>(
   { timestamps: true }
 );
 
-export const Dealer = models.Dealer || model<IDealer>("Dealer", DealerSchema);
+export const Dealer: Model<IDealer> =
+  (models.Dealer as Model<IDealer>) ||
+  model<IDealer>("Dealer", DealerSchema);

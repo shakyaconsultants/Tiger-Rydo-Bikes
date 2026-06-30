@@ -88,9 +88,9 @@ export default function AdminDashboardClient({
   const [selectedDealer, setSelectedDealer] = useState(0);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [websiteErrors, setWebsiteErrors] = useState<Record<string, string>>({});
-  const [productErrors, setProductErrors] = useState<Record<string, string>>({});
-  const [dealerErrors, setDealerErrors] = useState<Record<string, string>>({});
+  const [websiteErrors, setWebsiteErrors] = useState<Record<string, string | undefined>>({});
+  const [productErrors, setProductErrors] = useState<Record<string, string | undefined>>({});
+  const [dealerErrors, setDealerErrors] = useState<Record<string, string | undefined>>({});
   const [orderLoading, setOrderLoading] = useState(false);
 
   const product = products[selectedProduct];

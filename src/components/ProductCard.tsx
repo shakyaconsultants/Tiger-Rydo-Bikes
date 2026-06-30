@@ -3,6 +3,7 @@ import { ArrowRight, Battery } from "lucide-react";
 import Button from "./ui/Button";
 import type { Product } from "@/lib/types";
 import { formatPrice, getLowestPrice } from "@/lib/product-utils";
+import Image from "next/image";
 
 interface ProductCardProps {
   product: Product;
@@ -22,10 +23,12 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <div className="relative flex h-48 items-center justify-center overflow-hidden bg-[#0A0A0A]">
         {product.imageUrl ? (
-          <img
+          <Image
             src={product.imageUrl}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
           <MiniScooterSvg />
