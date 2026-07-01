@@ -46,7 +46,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-[#7A7A7A]">
               <li>info@tigerebikes.com</li>
               <li>+91 9125158769</li>
-              <li>Mon–Sat, 9AM–6PM</li>
+              <li>33, Hamirpur Rd, Keshav Nagar, W Block, Juhi Kalan, Saket Nagar, Kanpur, Uttar Pradesh 208014</li>
             </ul>
           </div>
         </div>

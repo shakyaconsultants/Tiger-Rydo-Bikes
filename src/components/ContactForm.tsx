@@ -95,7 +95,7 @@ export default function ContactForm() {
             <div className="mt-10 space-y-4">
               <InfoRow label="Email" value="info@tigerebikes.com" />
               <InfoRow label="Phone" value="+91 9125158769" />
-              <InfoRow label="Hours" value="Mon–Sat, 9AM–6PM" />
+              <InfoRow label="Hours" value="33, Hamirpur Rd, Keshav Nagar, W Block, Juhi Kalan, Saket Nagar, Kanpur, Uttar Pradesh 208014" />
             </div>
           </div>
 
