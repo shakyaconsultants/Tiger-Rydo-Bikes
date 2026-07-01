@@ -1,11 +1,12 @@
 import { connectDB } from "@/lib/mongodb";
 import { Inquiry } from "@/models/Inquiry";
 import { NextResponse } from "next/server";
+import { Product } from "@/models/Product";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone, scooter, message, type = "contact" } = body;
+    const { name, email, phone, scooter, scooterName, message, type = "contact" } = body;
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -20,11 +21,13 @@ export async function POST(request: Request) {
     }
 
     await connectDB();
+    const product = await Product.findOne({ slug: scooter });
     const inquiry = await Inquiry.create({
       name,
       email,
       phone,
       scooter,
+      scooterName: product?.name || "",
       message,
       type,
     });

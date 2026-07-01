@@ -91,6 +91,7 @@ export interface Inquiry {
   email: string;
   phone?: string;
   scooter?: string;
+  scooterName?: string;
   message: string;
   type: "contact" | "test-ride" | "newsletter";
   createdAt?: string;

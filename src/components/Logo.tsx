@@ -56,7 +56,9 @@ export default function Logo({
 
     <div className={className}>
       <Image
-        src="/images/tiges logo.png"
+        src={variant === "reverse"
+          ? "/images/tiger logo white.png"
+          : "/images/tiger logo.png"}
         alt="Tiger Rydo"
         width={220}
         height={70}

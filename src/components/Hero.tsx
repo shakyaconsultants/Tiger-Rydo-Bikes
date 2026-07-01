@@ -48,16 +48,40 @@ export default async function Hero() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-1 items-center justify-center lg:mt-0">
+        <div className="relative mt-16 flex flex-1 items-center justify-end lg:mt-0">
+
+          {/* Background Glow */}
+          <div className="absolute h-[520px] w-[520px] rounded-full bg-[#ff8a4c]/20 blur-[140px] animate-glow" />
+
+          {/* Secondary Glow */}
+          <div className="absolute h-[350px] w-[350px] rounded-full bg-[#ffd1b3]/10 blur-[90px]" />
+
+          {/* Shadow */}
+          <div className="absolute bottom-10 h-10 w-[330px] rounded-full bg-black/60 blur-2xl" />
+
           <Image
             src="/images/hero-bike.png"
             alt="Tiger Rydo Scooter"
-            width={700}
-            height={700}
+            width={820}
+            height={820}
             priority
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="h-auto w-full max-w-xl object-contain"
+            sizes="(max-width:768px)100vw,50vw"
+            className="
+      relative
+      z-10
+      w-full
+      max-w-2xl
+      object-contain
+      animate-float
+      transition-all
+      duration-700
+      hover:scale-110
+      hover:-translate-y-4
+      hover:rotate-[-4deg]
+      hover:drop-shadow-[0_35px_45px_rgba(255,90,0,0.35)]
+    "
           />
+
         </div>
       </div>
     </section>

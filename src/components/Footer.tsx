@@ -44,8 +44,8 @@ export default function Footer() {
           <div>
             <h4 className="mb-4 text-sm font-bold tracking-wider">CONTACT</h4>
             <ul className="space-y-3 text-sm text-[#7A7A7A]">
-              <li>hello@tigerrydo.com</li>
-              <li>+91 1800-TIGER-01</li>
+              <li>info@tigerebikes.com</li>
+              <li>+91 9125158769</li>
               <li>Mon–Sat, 9AM–6PM</li>
             </ul>
           </div>

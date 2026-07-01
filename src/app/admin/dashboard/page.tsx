@@ -54,6 +54,7 @@ export default async function AdminDashboardPage() {
       email: i.email,
       phone: i.phone,
       scooter: i.scooter,
+      scooterName: i.scooterName,
       message: i.message,
       type: i.type,
       createdAt: i.createdAt?.toISOString(),

@@ -5,6 +5,7 @@ export interface IInquiry {
   email: string;
   phone?: string;
   scooter?: string;
+  scooterName?: string;
   message: string;
   type: "contact" | "test-ride" | "newsletter";
 }
@@ -14,7 +15,14 @@ const InquirySchema = new Schema<IInquiry>(
     name: { type: String, required: true },
     email: { type: String, required: true },
     phone: { type: String },
-    scooter: { type: String },
+    scooter: {
+      type: String,
+      default: "",
+    },
+    scooterName: {
+      type: String,
+      default: "",
+    },
     message: { type: String, required: true },
     type: {
       type: String,

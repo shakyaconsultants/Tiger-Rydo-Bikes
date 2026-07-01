@@ -22,7 +22,7 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-[#2B2B2B] transition-colors hover:text-[#FF5A00]"
+              className="text-md font-medium text-[#2B2B2B] transition-colors hover:text-[#FF5A00]"
             >
               {link.label}
             </Link>
@@ -31,7 +31,7 @@ export default function Header() {
 
         <div className="hidden items-center gap-3 md:flex">
           <Link href="/dealer/login">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="md">
               Dealer Login
             </Button>
           </Link>

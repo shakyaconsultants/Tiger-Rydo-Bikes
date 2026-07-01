@@ -79,6 +79,7 @@ export default function AdminDashboardClient({
   initialOrders,
   initialInquiries,
 }: Props) {
+  const [inquiries, setInquiries] = useState(initialInquiries);
   const [tab, setTab] = useState<Tab>("website");
   const [settings, setSettings] = useState(initialSettings);
   const [products, setProducts] = useState(initialProducts.length ? initialProducts : [newProduct()]);
@@ -124,8 +125,28 @@ export default function AdminDashboardClient({
     setSettings(initialSettings);
   }, [initialSettings]);
 
+  useEffect(() => {
+    setInquiries(initialInquiries);
+  }, [initialInquiries]);
+
   function afterContentChange() {
     notifyContentUpdated();
+    router.refresh();
+  }
+
+  async function deleteInquiry(id: string) {
+    if (!confirm("Delete this inquiry?")) return;
+
+    const res = await fetch(`/api/admin/inquiries/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      setMessage("Failed to delete inquiry");
+      return;
+    }
+
+    setMessage("Inquiry deleted");
     router.refresh();
   }
 
@@ -532,15 +553,49 @@ export default function AdminDashboardClient({
 
       {tab === "messages" && (
         <Panel title="Customer Messages" description="Contact form and inquiry submissions.">
-          {initialInquiries.length === 0 ? (
+          {inquiries.length === 0 ? (
             <Empty text="No messages yet." />
           ) : (
             <div className="space-y-3">
-              {initialInquiries.map((inq) => (
-                <div key={inq._id} className="rounded-md border border-[#EEE] p-3 text-sm">
-                  <p className="font-medium">{inq.name}</p>
-                  <p className="text-[#888]">{inq.email}</p>
-                  <p className="mt-1">{inq.message}</p>
+              {inquiries.map((inq) => (
+                <div
+                  key={inq._id}
+                  className="rounded-lg border border-[#1f1f1f] bg-[#0f0f0f] p-4"
+                >
+                  {/* Top row */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-base font-medium text-white">{inq.name}</p>
+
+                      <div className="mt-1 space-y-1 text-xs text-[#9a9a9a]">
+                        <p>Email: {inq.email}</p>
+                        {inq.phone && <p>Phone: {inq.phone}</p>}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => deleteInquiry(inq._id!)}
+                      className="text-xs text-red-400 hover:text-red-300"
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  {/* Scooter */}
+                  {inq.type !== "newsletter" && (
+                    <p className="text-xs text-[#FF5A00] mt-3">
+                      Model:{" "}
+                      {inq.scooterName?.trim()
+                        ? inq.scooterName
+                        : products.find((p) => p.slug === inq.scooter)?.name ||
+                        inq.scooter}
+                    </p>
+                  )}
+
+                  {/* Message */}
+                  <p className="mt-2 text-sm text-[#cfcfcf] leading-relaxed">
+                    {inq.message}
+                  </p>
                 </div>
               ))}
             </div>

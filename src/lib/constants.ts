@@ -26,10 +26,11 @@ export const COLORS = {
 } as const;
 
 export const NAV_LINKS = [
+  { href: "/", label: "Home"},
   { href: "/products", label: "Products" },
   { href: "/dealers", label: "Dealers" },
-  { href: "/#battery", label: "Battery & Range" },
-  { href: "/#smart-connect", label: "Smart Connect" },
+  // { href: "/#battery", label: "Battery & Range" },
+  // { href: "/#smart-connect", label: "Smart Connect" },
   { href: "/#contact", label: "Contact" },
 ] as const;
 

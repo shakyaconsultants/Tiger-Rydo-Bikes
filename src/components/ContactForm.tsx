@@ -1,12 +1,33 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Button from "./ui/Button";
 import { Send, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function ContactForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  type ProductOption = {
+    name: string;
+    slug: string;
+  };
+  const [products, setProducts] = useState<ProductOption[]>([]);
+
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+
+        setProducts(data.products || []);
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      }
+    }
+
+    loadProducts();
+  }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -15,6 +36,14 @@ export default function ContactForm() {
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+    const selectedSlug = formData.get("scooter")?.toString() || "";
+
+    const selectedProduct = products.find(
+      (product) => product.slug === selectedSlug
+    );
+    console.log("Form scooter value:", formData.get("scooter"));
+    console.log("Selected slug:", selectedSlug);
+    console.log("Selected product:", selectedProduct);
 
     try {
       const res = await fetch("/api/inquiries", {
@@ -24,7 +53,8 @@ export default function ContactForm() {
           name: formData.get("name"),
           email: formData.get("email"),
           phone: formData.get("phone"),
-          scooter: formData.get("scooter"),
+          scooter: selectedSlug,
+          scooterName: selectedProduct?.name || "",
           message: formData.get("message"),
           type: "test-ride",
         }),
@@ -63,8 +93,8 @@ export default function ContactForm() {
             </p>
 
             <div className="mt-10 space-y-4">
-              <InfoRow label="Email" value="hello@tigerrydo.com" />
-              <InfoRow label="Phone" value="+91 1800-TIGER-01" />
+              <InfoRow label="Email" value="info@tigerebikes.com" />
+              <InfoRow label="Phone" value="+91 9125158769" />
               <InfoRow label="Hours" value="Mon–Sat, 9AM–6PM" />
             </div>
           </div>
@@ -86,9 +116,12 @@ export default function ContactForm() {
                   className="w-full rounded-lg border border-[#2B2B2B] bg-[#111111] px-4 py-3 text-sm text-white focus:border-[#FF5A00] focus:outline-none"
                 >
                   <option value="">Select a model</option>
-                  <option value="tiger-e1">Tiger E1</option>
-                  <option value="tiger-e1-pro">Tiger E1 Pro</option>
-                  <option value="tiger-e1-lite">Tiger E1 Lite</option>
+
+                  {products.map((product) => (
+                    <option key={product.slug} value={product.slug}>
+                      {product.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
