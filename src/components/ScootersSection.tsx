@@ -28,7 +28,10 @@ export default async function ScootersSection() {
           </div>
           {allProducts.length > 0 && (
             <Link href="/products">
-              <Button variant="outline" className="group">
+              <Button
+                variant="outline"
+                className="group hover:border-[#000000] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              >
                 View All Products
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>

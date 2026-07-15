@@ -16,6 +16,7 @@ import type {
   SiteSettings,
 } from "@/lib/types";
 import { formatPrice, isMongoObjectId } from "@/lib/product-utils";
+import ImageUploadField from "./ImageUploadField";
 import {
   PortalShell,
   SimpleTabs,
@@ -414,8 +415,13 @@ export default function AdminDashboardClient({
             onChange={(v) => setSettings({ ...settings, heroTitle: v })} />
           <Field label="Hero highlight word (e.g. FUTURE)" required value={settings.heroHighlight} error={websiteErrors.heroHighlight}
             onChange={(v) => { setSettings({ ...settings, heroHighlight: v }); setWebsiteErrors((e) => ({ ...e, heroHighlight: undefined })); }} />
-          <Field label="Logo image URL" value={settings.logoUrl}
-            onChange={(v) => setSettings({ ...settings, logoUrl: v })} />
+          <ImageUploadField
+            label="Logo image"
+            value={settings.logoUrl}
+            folder="tiger-rydo/logos"
+            hint="Upload your brand logo. The Cloudinary URL is saved when you click Save Website."
+            onChange={(v) => setSettings({ ...settings, logoUrl: v })}
+          />
         </Panel>
       )}
 
@@ -434,19 +440,38 @@ export default function AdminDashboardClient({
                 </option>
               ))}
             </select>
-            <Button size="sm" variant="outline" onClick={addProduct}>Add</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="hover:border-[#FF5A00] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              onClick={addProduct}
+            >
+              Add
+            </Button>
             <Button size="sm" onClick={saveProduct} disabled={loading}>
               {isMongoObjectId(product?._id) ? "Save" : "Save to Website"}
             </Button>
-            <Button size="sm" variant="outline" onClick={deleteProduct}>Delete</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="hover:border-[#FF5A00] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              onClick={deleteProduct}
+            >
+              Delete
+            </Button>
           </ActionBar>
 
           {product && (
             <>
               <Field label="Name" required value={product.name} error={productErrors.name}
                 onChange={(v) => { updateProduct({ name: v }); setProductErrors((e) => ({ ...e, name: undefined })); }} />
-              <Field label="Image URL" value={product.imageUrl || ""}
-                onChange={(v) => updateProduct({ imageUrl: v })} />
+              <ImageUploadField
+                label="Product image"
+                value={product.imageUrl || ""}
+                folder="tiger-rydo/products"
+                hint="Upload a product photo. The Cloudinary URL is saved when you click Save."
+                onChange={(v) => updateProduct({ imageUrl: v })}
+              />
               <Field label="Tagline" required value={product.tagline} error={productErrors.tagline}
                 onChange={(v) => { updateProduct({ tagline: v }); setProductErrors((e) => ({ ...e, tagline: undefined })); }} />
               <Field label="Description" value={product.description} rows={2}
@@ -490,11 +515,25 @@ export default function AdminDashboardClient({
                 <option key={d.email + i} value={i}>{d.name || `Dealer ${i + 1}`}</option>
               ))}
             </select>
-            <Button size="sm" variant="outline" onClick={addDealer}>Add</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="hover:border-[#FF5A00] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              onClick={addDealer}
+            >
+              Add
+            </Button>
             <Button size="sm" onClick={saveDealer} disabled={loading}>
               {dealer?._id ? "Save" : "Save New"}
             </Button>
-            <Button size="sm" variant="outline" onClick={deleteDealer}>Delete</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="hover:border-[#FF5A00] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              onClick={deleteDealer}
+            >
+              Delete
+            </Button>
           </ActionBar>
 
           {dealer && (
