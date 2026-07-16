@@ -85,6 +85,24 @@ export interface SiteSettings {
   hiddenProductSlugs?: string[];
 }
 
+export interface ListedProduct {
+  _id?: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CartItem {
+  listedProductId: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  quantity: number;
+}
+
 export interface Inquiry {
   _id?: string;
   name: string;

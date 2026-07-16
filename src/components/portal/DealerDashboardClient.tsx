@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import DealerLogoutButton from "@/components/DealerLogoutButton";
-import type { DealerSession, Order, OrderStatus, Product } from "@/lib/types";
+import type { DealerSession, CartItem, ListedProduct, Order, OrderStatus, Product } from "@/lib/types";
 import { formatPrice } from "@/lib/product-utils";
 import PlaceOrderPanel from "./PlaceOrderPanel";
 import OrdersPanel from "./OrdersPanel";
+import DealerProductsPanel from "./DealerProductsPanel";
 import {
   PortalShell,
   SimpleTabs,
@@ -13,20 +14,22 @@ import {
   StatCard,
 } from "./shared";
 
-type Tab = "order" | "orders";
+type Tab = "products" | "order" | "orders";
 
 interface Props {
   session: DealerSession;
   products: Product[];
+  listedProducts: ListedProduct[];
   initialOrders: Order[];
 }
 
 export default function DealerDashboardClient({
   session,
   products,
+  listedProducts,
   initialOrders,
 }: Props) {
-  const [tab, setTab] = useState<Tab>("orders");
+  const [tab, setTab] = useState<Tab>("products");
   const [orders, setOrders] = useState(initialOrders);
   const [message, setMessage] = useState("");
   const [flashType, setFlashType] = useState<"info" | "success" | "error">("info");
@@ -43,6 +46,37 @@ export default function DealerDashboardClient({
   function showMessage(text: string, type: "info" | "success" | "error" = "info") {
     setMessage(text);
     setFlashType(type);
+  }
+
+  async function checkoutCart(items: CartItem[], notes: string) {
+    setLoading(true);
+    showMessage("");
+    const res = await fetch("/api/dealer/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cartItems: items.map((item) => ({
+          listedProductId: item.listedProductId,
+          quantity: item.quantity,
+        })),
+        notes,
+      }),
+    });
+    const result = await res.json();
+    setLoading(false);
+    if (!res.ok) {
+      showMessage(result.error || "Order failed", "error");
+      return;
+    }
+    const newOrders = result.orders || [];
+    setOrders((prev) => [...newOrders, ...prev]);
+    showMessage(
+      newOrders.length === 1
+        ? "Order placed successfully!"
+        : `${newOrders.length} orders placed successfully!`,
+      "success"
+    );
+    setTab("orders");
   }
 
   async function placeOrder(data: {
@@ -119,10 +153,20 @@ export default function DealerDashboardClient({
         active={tab}
         onChange={setTab}
         tabs={[
+          { id: "products", label: "Products", count: listedProducts.length || undefined },
           { id: "orders", label: "My Orders", count: orders.length },
-          { id: "order", label: "Place New Order" },
+          { id: "order", label: "Place E-Bike Order" },
         ]}
       />
+
+      {tab === "products" && (
+        <DealerProductsPanel
+          products={listedProducts}
+          onCheckout={checkoutCart}
+          loading={loading}
+          onMessage={showMessage}
+        />
+      )}
 
       {tab === "orders" && (
         <OrdersPanel

@@ -7,10 +7,12 @@ import Button from "@/components/ui/Button";
 import { notifyContentUpdated } from "@/lib/content-sync";
 import PlaceOrderPanel from "./PlaceOrderPanel";
 import OrdersPanel from "./OrdersPanel";
+import ListedProductsPanel from "./ListedProductsPanel";
 import type {
   Dealer,
   DealerSession,
   Inquiry,
+  ListedProduct,
   Order,
   Product,
   SiteSettings,
@@ -31,12 +33,13 @@ import {
   BRAND_ORANGE,
 } from "./shared";
 
-type Tab = "website" | "products" | "dealers" | "place-order" | "orders" | "messages";
+type Tab = "website" | "products" | "listed-products" | "dealers" | "place-order" | "orders" | "messages";
 
 interface Props {
   session: DealerSession;
   initialSettings: SiteSettings;
   initialProducts: Product[];
+  initialListedProducts: ListedProduct[];
   initialDealers: Dealer[];
   initialOrders: Order[];
   initialInquiries: Inquiry[];
@@ -76,6 +79,7 @@ export default function AdminDashboardClient({
   session,
   initialSettings,
   initialProducts,
+  initialListedProducts,
   initialDealers,
   initialOrders,
   initialInquiries,
@@ -129,6 +133,21 @@ export default function AdminDashboardClient({
   useEffect(() => {
     setInquiries(initialInquiries);
   }, [initialInquiries]);
+
+  useEffect(() => {
+    if (!message) return;
+
+    const timer = setTimeout(() => {
+      setMessage("");
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  useEffect(() => {
+    setMessage("");
+  }, [tab]);
+
 
   function afterContentChange() {
     notifyContentUpdated();
@@ -382,7 +401,7 @@ export default function AdminDashboardClient({
         <DealerLogoutButton />
       </div>
 
-      <Flash message={message} />
+      {/* <Flash message={message} /> */}
 
       <SimpleTabs
         active={tab}
@@ -390,6 +409,7 @@ export default function AdminDashboardClient({
         tabs={[
           { id: "website", label: "Website" },
           { id: "products", label: "E-Bikes" },
+          { id: "listed-products", label: "Dealer Products" },
           { id: "dealers", label: "Dealers" },
           { id: "place-order", label: "Place Order" },
           { id: "orders", label: "All Orders", count: orders.length },
@@ -404,6 +424,12 @@ export default function AdminDashboardClient({
               Save Website
             </Button>
           </ActionBar>
+
+          {message && tab === "website" && (
+            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+              {message}
+            </div>
+          )}
 
           <Field label="Brand name" required value={settings.brandName} error={websiteErrors.brandName}
             onChange={(v) => { setSettings({ ...settings, brandName: v }); setWebsiteErrors({}); }} />
@@ -461,6 +487,12 @@ export default function AdminDashboardClient({
             </Button>
           </ActionBar>
 
+          {message && tab === "products" && (
+            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+              {message}
+            </div>
+          )}
+
           {product && (
             <>
               <Field label="Name" required value={product.name} error={productErrors.name}
@@ -503,6 +535,14 @@ export default function AdminDashboardClient({
         </Panel>
       )}
 
+      <div className={tab !== "listed-products" ? "hidden" : undefined}>
+        <ListedProductsPanel
+          initialProducts={initialListedProducts}
+          onMessage={setMessage}
+          message={message}
+        />
+      </div>
+
       {tab === "dealers" && (
         <Panel title="Dealer Network" description="Add and manage authorized dealers on the public site.">
           <ActionBar>
@@ -535,6 +575,12 @@ export default function AdminDashboardClient({
               Delete
             </Button>
           </ActionBar>
+
+          {message && tab === "dealers" && (
+            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+              {message}
+            </div>
+          )}
 
           {dealer && (
             <>
@@ -570,6 +616,13 @@ export default function AdminDashboardClient({
 
       {tab === "orders" && (
         <div className="space-y-6">
+
+          {message && tab === "orders" && (
+            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+              {message}
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard label="Total Orders" value={orderStats.total} hint="All dealers" accent="blue" />
             <StatCard label="Pending" value={orderStats.pending} hint="Awaiting action" accent="orange" />
@@ -592,6 +645,13 @@ export default function AdminDashboardClient({
 
       {tab === "messages" && (
         <Panel title="Customer Messages" description="Contact form and inquiry submissions.">
+
+          {message && (
+            <div className="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+              {message}
+            </div>
+          )}
+
           {inquiries.length === 0 ? (
             <Empty text="No messages yet." />
           ) : (

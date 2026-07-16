@@ -35,7 +35,10 @@ export default async function DealersPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/dealer/login">
-              <Button variant="outline">
+              <Button
+                variant="outline"
+                className="hover:border-[#FF5A00] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              >
                 <LogIn className="mr-2 h-4 w-4" />
                 Dealer Login
               </Button>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
 import { getDealerSession } from "@/lib/auth";
 import { getProducts } from "@/lib/products";
+import { getListedProducts } from "@/lib/listed-products";
 import { getAllOrders } from "@/lib/orders";
 import { getSiteSettings } from "@/lib/siteSettings";
 import { Dealer } from "@/models/Dealer";
@@ -18,9 +19,10 @@ export default async function AdminDashboardPage() {
   if (!session) redirect("/dealer/login");
   if (session.role !== "admin") redirect("/dealer/dashboard");
 
-  const [settings, products, orders] = await Promise.all([
+  const [settings, products, listedProducts, orders] = await Promise.all([
     getSiteSettings(),
     getProducts(),
+    getListedProducts(),
     getAllOrders(),
   ]);
 
@@ -68,6 +70,7 @@ export default async function AdminDashboardPage() {
       session={session}
       initialSettings={settings}
       initialProducts={products}
+      initialListedProducts={listedProducts}
       initialDealers={dealers}
       initialOrders={orders}
       initialInquiries={inquiries}

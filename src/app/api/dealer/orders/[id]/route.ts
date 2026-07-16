@@ -8,7 +8,7 @@ interface RouteParams {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const session = await requireSession(["dealer"]);
+  const session = await requireSession(["admin", "dealer"]);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -22,7 +22,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Dealers can only cancel orders" }, { status: 400 });
     }
 
-    const order = await Order.findOne({ _id: id, dealerId: session.id });
+    const orderFilter =
+      session.role === "admin"
+        ? { _id: id }
+        : { _id: id, dealerId: session.id };
+
+    const order = await Order.findOne(orderFilter);
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
