@@ -210,88 +210,46 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
           {pdfLoading ? "Generating..." : "Download PDF"}
         </Button>
       </ActionBar>
-      
+
       {message && (
         <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
           {message}
         </div>
       )}
 
-      {savedProducts.length > 0 && (
-        <div className="mb-6 border-b border-[#E6E6E6] pb-6">
-          <div className="mb-4">
-            <p className="text-sm font-bold text-[#111]">Saved Products</p>
-            <p className="text-xs text-[#888]">
-              {savedProducts.length} product{savedProducts.length !== 1 ? "s" : ""} · click a card to edit
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {savedProducts.map((p) => {
-              const index = products.findIndex((item) => item._id === p._id);
-              const isSelected = index === selected;
-              return (
-                <button
-                  key={p._id}
-                  type="button"
-                  onClick={() => {
-                    if (index >= 0) setSelected(index);
-                  }}
-                  className={`group overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md ${isSelected
-                      ? "border-[#FF5A00] ring-2 ring-[#FF5A00]/25"
-                      : "border-[#E6E6E6] hover:border-[#FF5A00]/50"
-                    }`}
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F4F5]">
-                    {p.imageUrl ? (
-                      <Image
-                        src={p.imageUrl}
-                        alt={p.name}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                      />
-                    ) : (
-                      <div className="flex h-full min-h-[100px] items-center justify-center text-xs text-[#999]">
-                        No image
-                      </div>
-                    )}
-
-                  </div>
-                  <div className="border-t border-[#F0F0F0] p-3">
-                    <p className="line-clamp-2 text-sm font-semibold leading-snug text-[#111]">
-                      {p.name}
-                    </p>
-                    <p className="mt-1.5 text-sm font-bold text-[#FF5A00]">{formatPrice(p.price)}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {product ? (
         <>
-          <Field
-            label="Name"
-            required
-            value={product.name}
-            error={errors.name}
-            onChange={(v) => {
-              updateProduct({ name: v });
-              setErrors((e) => ({ ...e, name: undefined }));
-            }}
-          />
-          <Field
-            label="Price (₹)"
-            required
-            value={String(product.price || "")}
-            error={errors.price}
-            onChange={(v) => {
-              updateProduct({ price: Number(v) || 0 });
-              setErrors((e) => ({ ...e, price: undefined }));
-            }}
-          />
+          <div className="mb-4 grid grid-cols-2 gap-4">
+            <div>
+              <Field
+                label="Name"
+                required
+                value={product.name}
+                error={errors.name}
+                onChange={(v) => {
+                  updateProduct({ name: v });
+                  setErrors((e) => ({ ...e, name: undefined }));
+                }}
+              />
+            </div>
+
+            <div>
+              <Field
+                label="Price (₹)"
+                required
+                type="number"
+                step="0.01"
+                value={String(product.price || "")}
+                error={errors.price}
+                onChange={(v) => {
+                  updateProduct({
+                    price: v === "" ? 0 : parseFloat(v),
+                  });
+                  setErrors((e) => ({ ...e, price: undefined }));
+                }}
+              />
+            </div>
+          </div>
           <ImageUploadField
             label="Product image"
             value={product.imageUrl}
@@ -323,6 +281,61 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
       ) : (
         <Empty text="Add a dealer product to get started." />
       )}
+
+      {savedProducts.length > 0 && (
+        <div className="mb-6 border-b border-[#E6E6E6] pb-6">
+          <div className="mb-4">
+            <p className="text-sm font-bold text-[#111]">Saved Products</p>
+            <p className="text-xs text-[#888]">
+              {savedProducts.length} product{savedProducts.length !== 1 ? "s" : ""} · click a card to edit
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {savedProducts.map((p) => {
+              const index = products.findIndex((item) => item._id === p._id);
+              const isSelected = index === selected;
+              return (
+                <button
+                  key={p._id}
+                  type="button"
+                  onClick={() => {
+                    if (index >= 0) setSelected(index);
+                  }}
+                  className={`group overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md ${isSelected
+                    ? "border-[#FF5A00] ring-2 ring-[#FF5A00]/25"
+                    : "border-[#E6E6E6] hover:border-[#FF5A00]/50"
+                    }`}
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F4F5]">
+                    {p.imageUrl ? (
+                      <Image
+                        src={p.imageUrl}
+                        alt={p.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    ) : (
+                      <div className="flex h-full min-h-[100px] items-center justify-center text-xs text-[#999]">
+                        No image
+                      </div>
+                    )}
+
+                  </div>
+                  <div className="border-t border-[#F0F0F0] p-3">
+                    <p className="line-clamp-2 text-sm font-semibold leading-snug text-[#111]">
+                      {p.name}
+                    </p>
+                    <p className="mt-1.5 text-sm font-bold text-[#FF5A00]">{formatPrice(p.price)}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+
     </Panel>
   );
 }

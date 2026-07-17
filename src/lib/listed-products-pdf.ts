@@ -1,6 +1,24 @@
 import type { ListedProduct } from "@/lib/types";
 import { formatPrice } from "@/lib/product-utils";
 
+async function getBase64Image(url: string): Promise<string |null> {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) return null;
+
+    const blob = await response.blob();
+
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function downloadListedProductsPdf(products: ListedProduct[]) {
   const { jsPDF } = await import("jspdf");
   const autoTable = (await import("jspdf-autotable")).default;
@@ -54,16 +72,27 @@ export async function downloadListedProductsPdf(products: ListedProduct[]) {
   // =========================
   // TABLE
   // =========================
+  const productsWithImages = await Promise.all(
+    products.map(async (product) => ({
+      ...product,
+      image: product.imageUrl
+        ? await getBase64Image(product.imageUrl)
+        : null,
+    }))
+  );
+  
+  
   autoTable(doc, {
     startY: 66,
 
-    head: [["#", "Product Name", "Price"]],
+    head: [["#", "Image", "Product Name", "Price"]],
 
-    body: products.map((product, index) => [
-      index + 1,
-      product.name,
-      `Rs. ${new Intl.NumberFormat("en-IN").format(product.price)}`,
-    ]),
+    body: productsWithImages.map((product, index) => [
+  index + 1,
+  "",
+  product.name,
+  `Rs. ${new Intl.NumberFormat("en-IN").format(product.price)}`,
+]),
 
     theme: "grid",
 
@@ -95,21 +124,24 @@ export async function downloadListedProductsPdf(products: ListedProduct[]) {
 
     // Total usable width ≈ 182mm
     columnStyles: {
-      // Sr No.
       0: {
-        cellWidth: 18,
+        cellWidth: 15,
         halign: "center",
       },
-
-      // Product Name (Reduced)
+    
       1: {
-        cellWidth: 92,
+        cellWidth: 45,
+        minCellHeight: 20, // Image
+        halign: "center",
+      },
+    
+      2: {
+        cellWidth: 85, // Product Name
         halign: "left",
       },
-
-      // Price (Increased)
-      2: {
-        cellWidth: 72,
+    
+      3: {
+        cellWidth: 42, // Price
         halign: "right",
       },
     },
@@ -118,7 +150,31 @@ export async function downloadListedProductsPdf(products: ListedProduct[]) {
       left: 14,
       right: 14,
     },
-
+    didDrawCell: (data) => {
+      if (data.section === "body" && data.column.index === 1) {
+        const img = productsWithImages[data.row.index].image;
+    
+        if (!img) return;
+    
+        try {
+          const size = 18;
+    
+          const x =
+            data.cell.x + (data.cell.width - size) / 2;
+    
+          const y =
+            data.cell.y + (data.cell.height - size) / 2;
+    
+          const format = img.startsWith("data:image/png")
+            ? "PNG"
+            : "JPEG";
+    
+          doc.addImage(img, format, x, y, size, size);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    },
     didDrawPage: () => {
       doc.setDrawColor(220);
       doc.line(14, pageHeight - 16, pageWidth - 14, pageHeight - 16);

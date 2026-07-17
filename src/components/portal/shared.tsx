@@ -152,6 +152,7 @@ export function Field({
   value,
   onChange,
   type = "text",
+  step,
   rows,
   required,
   error,
@@ -162,6 +163,7 @@ export function Field({
   value: string;
   onChange: (v: string) => void;
   type?: string;
+  step?: string;
   rows?: number;
   required?: boolean;
   error?: string;
@@ -190,6 +192,7 @@ export function Field({
         ) : (
           <input
             type={type}
+            step={step}
             className={cls}
             value={value}
             placeholder={fieldPlaceholder}
