@@ -98,14 +98,6 @@ export default function ImageUploadField({
         )}
       </div>
 
-      <input
-        type="url"
-        className={`${inputClass} mt-3`}
-        value={value}
-        placeholder="Image URL (filled automatically after upload)"
-        onChange={(e) => onChange(e.target.value)}
-      />
-
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
     </div>
   );

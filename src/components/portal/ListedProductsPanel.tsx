@@ -219,64 +219,87 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
 
       {product ? (
         <>
-          <div className="mb-4 grid grid-cols-2 gap-4">
-            <div>
-              <Field
-                label="Name"
-                required
-                value={product.name}
-                error={errors.name}
-                onChange={(v) => {
-                  updateProduct({ name: v });
-                  setErrors((e) => ({ ...e, name: undefined }));
-                }}
-              />
-            </div>
+          {/* Row 1 */}
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field
+              label="Name"
+              required
+              value={product.name}
+              error={errors.name}
+              onChange={(v) => {
+                updateProduct({ name: v });
+                setErrors((e) => ({ ...e, name: undefined }));
+              }}
+            />
+
+            <Field
+              label="Price (₹)"
+              required
+              type="number"
+              value={String(product.price || "")}
+              error={errors.price}
+              onChange={(v) => {
+                updateProduct({
+                  price: v === "" ? 0 : parseFloat(v),
+                });
+                setErrors((e) => ({ ...e, price: undefined }));
+              }}
+            />
 
             <div>
-              <Field
-                label="Price (₹)"
-                required
-                type="number"
-                step="0.01"
-                value={String(product.price || "")}
-                error={errors.price}
-                onChange={(v) => {
-                  updateProduct({
-                    price: v === "" ? 0 : parseFloat(v),
-                  });
-                  setErrors((e) => ({ ...e, price: undefined }));
-                }}
-              />
+              <label className="mb-1.5 block text-sm font-semibold text-[#333]">
+                Status
+              </label>
+
+              <label className="flex h-[42px] items-center gap-3 rounded-lg border border-[#E6E6E6] bg-white px-3">
+                <input
+                  type="checkbox"
+                  checked={product.isActive}
+                  onChange={(e) => updateProduct({ isActive: e.target.checked })}
+                />
+
+                <div>
+                  <p className="text-sm font-semibold text-[#111]">
+                    {product.isActive ? "Active" : "Inactive"}
+                  </p>
+
+                  <p className="text-[11px] text-[#888] leading-tight">
+                    Hidden from dealers when inactive
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
-          <ImageUploadField
-            label="Product image"
-            value={product.imageUrl}
-            folder="tiger-rydo/listed-products"
-            hint="Upload a product photo. Only name, price, and image are shown to dealers."
-            onChange={(v) => {
-              updateProduct({ imageUrl: v });
-              setErrors((e) => ({ ...e, imageUrl: undefined }));
-            }}
-          />
-          {errors.imageUrl && (
-            <p className="-mt-3 mb-4 text-xs text-red-500">{errors.imageUrl}</p>
-          )}
-          <label className="mb-4 flex items-start gap-3 rounded-lg border border-[#E6E6E6] bg-white p-3 text-sm">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              checked={product.isActive}
-              onChange={(e) => updateProduct({ isActive: e.target.checked })}
+
+          {/* Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ImageUploadField
+              label="Product Image"
+              value={product.imageUrl}
+              folder="tiger-rydo/listed-products"
+              hint=""
+              onChange={(v) => {
+                updateProduct({ imageUrl: v });
+                setErrors((e) => ({ ...e, imageUrl: undefined }));
+              }}
             />
-            <span>
-              <span className="font-semibold text-[#111]">Active</span>
-              <span className="mt-0.5 block text-xs text-[#888]">
-                Inactive products are hidden from dealers.
-              </span>
-            </span>
-          </label>
+
+            <Field
+              label="Image URL"
+              value={product.imageUrl}
+              rows={2}
+              onChange={(v) => {
+                updateProduct({ imageUrl: v });
+                setErrors((e) => ({ ...e, imageUrl: undefined }));
+              }}
+            />
+          </div>
+
+          {errors.imageUrl && (
+            <p className="mt-2 text-xs text-red-500">
+              {errors.imageUrl}
+            </p>
+          )}
         </>
       ) : (
         <Empty text="Add a dealer product to get started." />
