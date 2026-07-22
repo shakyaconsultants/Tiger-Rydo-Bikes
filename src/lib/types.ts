@@ -95,6 +95,35 @@ export interface ListedProduct {
   updatedAt?: string;
 }
 
+export type InventoryStockStatus = "in_stock" | "low" | "out_of_stock";
+
+export interface InventoryItem {
+  _id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  isActive: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  stockStatus: InventoryStockStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InventoryTransaction {
+  _id?: string;
+  productId: string;
+  productName: string;
+  type: "in" | "out" | "adjustment" | "set";
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  reason: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt?: string;
+}
+
 export interface CartItem {
   listedProductId: string;
   name: string;

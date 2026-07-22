@@ -8,6 +8,7 @@ import { notifyContentUpdated } from "@/lib/content-sync";
 import PlaceOrderPanel from "./PlaceOrderPanel";
 import OrdersPanel from "./OrdersPanel";
 import ListedProductsPanel from "./ListedProductsPanel";
+import InventoryPanel from "./InventoryPanel";
 import type {
   Dealer,
   DealerSession,
@@ -33,7 +34,7 @@ import {
   BRAND_ORANGE,
 } from "./shared";
 
-type Tab = "website" | "products" | "listed-products" | "dealers" | "place-order" | "orders" | "messages";
+type Tab = "website" | "products" | "listed-products" | "inventory" | "dealers" | "place-order" | "orders" | "messages";
 
 interface Props {
   session: DealerSession;
@@ -410,6 +411,7 @@ export default function AdminDashboardClient({
           { id: "website", label: "Website" },
           { id: "products", label: "E-Bikes" },
           { id: "listed-products", label: "Dealer Products" },
+          { id: "inventory", label: "Inventory" },
           { id: "dealers", label: "Dealers" },
           { id: "place-order", label: "Place Order" },
           { id: "orders", label: "All Orders", count: orders.length },
@@ -541,6 +543,10 @@ export default function AdminDashboardClient({
           onMessage={setMessage}
           message={message}
         />
+      </div>
+
+      <div className={tab !== "inventory" ? "hidden" : undefined}>
+        <InventoryPanel onMessage={setMessage} message={message} />
       </div>
 
       {tab === "dealers" && (

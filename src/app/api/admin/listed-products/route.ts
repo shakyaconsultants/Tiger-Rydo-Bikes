@@ -44,6 +44,9 @@ export async function POST(request: Request) {
       price: Number(price),
       imageUrl: imageUrl.trim(),
       isActive: isActive !== false,
+      trackInventory: true,
+      stockQuantity: 0,
+      lowStockThreshold: 5,
     });
 
     const doc = product.toObject();
