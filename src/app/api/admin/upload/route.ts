@@ -8,7 +8,6 @@ const ALLOWED_TYPES = new Set([
   "image/png",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ]);
 
 export async function POST(request: Request) {
@@ -35,7 +34,7 @@ export async function POST(request: Request) {
 
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json(
-        { error: "Only JPEG, PNG, WebP, GIF, and SVG images are allowed" },
+        { error: "Only JPEG, PNG, WebP, and GIF images are allowed" },
         { status: 400 }
       );
     }

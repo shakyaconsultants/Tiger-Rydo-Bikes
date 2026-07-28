@@ -11,6 +11,14 @@ interface ImageUploadFieldProps {
   hint?: string;
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
 export default function ImageUploadField({
   label,
   value,
@@ -25,6 +33,22 @@ export default function ImageUploadField({
   async function handleFileSelect(file: File | null) {
     if (!file) return;
 
+    if (!ACCEPTED_MIME_TYPES.has(file.type)) {
+      setError("Only JPEG, PNG, WebP, and GIF images are allowed");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError("Image must be 5 MB or smaller");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      return;
+    }
+
     setError("");
     setUploading(true);
 
@@ -37,10 +61,14 @@ export default function ImageUploadField({
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
 
       if (!res.ok) {
         throw new Error(data.error || "Upload failed");
+      }
+
+      if (!data.url) {
+        throw new Error("Upload failed: missing image URL");
       }
 
       onChange(data.url);
@@ -74,7 +102,7 @@ export default function ImageUploadField({
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           className="hidden"
           onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
         />
