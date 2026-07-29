@@ -59,10 +59,21 @@ export function defaultBrochure(): ProductBrochure {
   return {
     enabled: false,
     coverTagline: "CLEAN ENERGY COMMUTING",
+    brandName: "Tiger Rydo",
+    logoUrl: "",
     speedCategory: "slow_speed",
     shortDescription: "",
     colors: [],
-    galleryImageUrls: [],
+    galleryImages: [],
+    mission: "Build clean, bold and reliable electric mobility for everyday riders.",
+    companyDescription:
+      "Tiger Rydo designs premium electric two-wheelers for modern city mobility with a focus on comfort, safety, and sustainability.",
+    address: "",
+    phone: "",
+    email: "",
+    website: "www.tigerrydo.com",
+    qrCodeUrl: "",
+    socialLinks: [],
     motor: "Highly Insulated BLDC Motor",
     speed: "Slow Speed",
     chassis: "High Strength Tubular Frame",
@@ -93,6 +104,22 @@ export function defaultBrochure(): ProductBrochure {
 export function normalizeBrochure(input?: Partial<ProductBrochure> | null): ProductBrochure {
   const base = defaultBrochure();
   if (!input) return base;
+  const legacy = input as Partial<ProductBrochure> & { galleryImageUrls?: unknown };
+
+  const galleryFromNew = Array.isArray(input.galleryImages)
+    ? input.galleryImages
+        .map((item) => ({
+          url: String(item?.url || "").trim(),
+          caption: String(item?.caption || "").trim(),
+        }))
+        .filter((item) => item.url)
+    : [];
+
+  const galleryFromLegacy = Array.isArray(legacy.galleryImageUrls)
+    ? legacy.galleryImageUrls
+        .map((u) => ({ url: String(u || "").trim(), caption: "" }))
+        .filter((item) => item.url)
+    : [];
 
   return {
     ...base,
@@ -100,9 +127,17 @@ export function normalizeBrochure(input?: Partial<ProductBrochure> | null): Prod
     colors: Array.isArray(input.colors)
       ? input.colors.map((c) => String(c).trim()).filter(Boolean)
       : base.colors,
-    galleryImageUrls: Array.isArray(input.galleryImageUrls)
-      ? input.galleryImageUrls.map((u) => String(u).trim()).filter(Boolean)
-      : base.galleryImageUrls,
+    galleryImages: galleryFromNew.length > 0 ? galleryFromNew : galleryFromLegacy,
+    mission: String(input.mission ?? base.mission).trim(),
+    companyDescription: String(input.companyDescription ?? base.companyDescription).trim(),
+    address: String(input.address ?? base.address).trim(),
+    phone: String(input.phone ?? base.phone).trim(),
+    email: String(input.email ?? base.email).trim(),
+    website: String(input.website ?? base.website).trim(),
+    qrCodeUrl: String(input.qrCodeUrl ?? base.qrCodeUrl).trim(),
+    socialLinks: Array.isArray(input.socialLinks)
+      ? input.socialLinks.map((s) => String(s).trim()).filter(Boolean)
+      : base.socialLinks,
     highlightFeatures: Array.isArray(input.highlightFeatures)
       ? input.highlightFeatures.map((f) => String(f).trim()).filter(Boolean)
       : base.highlightFeatures,

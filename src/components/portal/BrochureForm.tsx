@@ -93,6 +93,7 @@ interface Props {
 export default function BrochureForm({ brochure, onChange }: Props) {
   const [colorDraft, setColorDraft] = useState("");
   const [highlightDraft, setHighlightDraft] = useState("");
+  const [socialDraft, setSocialDraft] = useState("");
 
   function patch(partial: Partial<ProductBrochure>) {
     onChange({ ...brochure, ...partial });
@@ -120,6 +121,17 @@ export default function BrochureForm({ brochure, onChange }: Props) {
     setHighlightDraft("");
   }
 
+  function addSocial() {
+    const next = socialDraft.trim();
+    if (!next) return;
+    if (brochure.socialLinks.some((s) => s.toLowerCase() === next.toLowerCase())) {
+      setSocialDraft("");
+      return;
+    }
+    patch({ socialLinks: [...brochure.socialLinks, next] });
+    setSocialDraft("");
+  }
+
   return (
     <div className="mt-6 space-y-6 border-t border-[#F0F0F0] pt-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -143,6 +155,12 @@ export default function BrochureForm({ brochure, onChange }: Props) {
         <p className="mb-3 text-sm font-bold text-[#111]">Cover & overview</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field
+            label="Brand name"
+            value={brochure.brandName}
+            placeholder="Tiger Rydo"
+            onChange={(brandName) => patch({ brandName })}
+          />
+          <Field
             label="Cover tagline"
             value={brochure.coverTagline}
             placeholder="CLEAN ENERGY COMMUTING"
@@ -162,6 +180,13 @@ export default function BrochureForm({ brochure, onChange }: Props) {
             }
           />
         </div>
+        <ImageUploadField
+          label="Logo image"
+          value={brochure.logoUrl}
+          folder="tiger-rydo/branding"
+          hint="Optional. Shown in top corner on every brochure page."
+          onChange={(logoUrl) => patch({ logoUrl })}
+        />
         <Field
           label="Short description"
           rows={3}
@@ -218,6 +243,89 @@ export default function BrochureForm({ brochure, onChange }: Props) {
       </div>
 
       <div className="rounded-xl border border-[#E6E6E6] bg-[#FAFAFA] p-4">
+        <p className="mb-3 text-sm font-bold text-[#111]">Company details (final page)</p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field
+            label="Mission"
+            rows={2}
+            value={brochure.mission}
+            onChange={(mission) => patch({ mission })}
+          />
+          <Field
+            label="Company description"
+            rows={2}
+            value={brochure.companyDescription}
+            onChange={(companyDescription) => patch({ companyDescription })}
+          />
+          <Field
+            label="Address"
+            rows={2}
+            value={brochure.address}
+            onChange={(address) => patch({ address })}
+          />
+          <Field label="Phone" value={brochure.phone} onChange={(phone) => patch({ phone })} />
+          <Field label="Email" value={brochure.email} onChange={(email) => patch({ email })} />
+          <Field
+            label="Website"
+            value={brochure.website}
+            onChange={(website) => patch({ website })}
+          />
+        </div>
+        <ImageUploadField
+          label="QR image"
+          value={brochure.qrCodeUrl}
+          folder="tiger-rydo/branding/qr"
+          hint="Optional. Upload a QR code image for website/lead form."
+          onChange={(qrCodeUrl) => patch({ qrCodeUrl })}
+        />
+        <div className="mt-3">
+          <label className="mb-1.5 block text-sm font-semibold text-[#333]">Social links</label>
+          <div className="flex flex-wrap gap-2">
+            <input
+              className={inputClass + " max-w-[360px]"}
+              value={socialDraft}
+              placeholder="e.g. instagram.com/tigerrydo"
+              onChange={(e) => setSocialDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addSocial();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addSocial}
+              className="rounded-lg border border-[#E6E6E6] bg-white px-3 py-2 text-sm font-semibold text-[#111] hover:border-[#FF5A00]/40"
+            >
+              Add social
+            </button>
+          </div>
+          {brochure.socialLinks.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {brochure.socialLinks.map((s) => (
+                <span
+                  key={s}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#E6E6E6] bg-white px-3 py-1 text-xs font-medium text-[#333]"
+                >
+                  {s}
+                  <button
+                    type="button"
+                    className="text-[#999] hover:text-red-500"
+                    onClick={() =>
+                      patch({ socialLinks: brochure.socialLinks.filter((x) => x !== s) })
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[#E6E6E6] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-sm font-bold text-[#111]">Gallery images</p>
         <p className="mb-3 text-xs text-[#888]">
           Upload extra product photos for the brochure pages (main product image is still used as cover).
@@ -230,22 +338,40 @@ export default function BrochureForm({ brochure, onChange }: Props) {
           onChange={() => undefined}
           onBatchUpload={(urls) =>
             patch({
-              galleryImageUrls: [...brochure.galleryImageUrls, ...urls],
+              galleryImages: [
+                ...brochure.galleryImages,
+                ...urls.map((url) => ({ url, caption: "" })),
+              ],
             })
           }
         />
-        {brochure.galleryImageUrls.length > 0 && (
+        {brochure.galleryImages.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {brochure.galleryImageUrls.map((url) => (
-              <div key={url} className="relative overflow-hidden rounded-lg border border-[#E6E6E6] bg-white">
+            {brochure.galleryImages.map((item, idx) => (
+              <div
+                key={`${item.url}-${idx}`}
+                className="relative overflow-hidden rounded-lg border border-[#E6E6E6] bg-white p-2"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="Gallery" className="h-24 w-full object-contain p-2" />
+                <img src={item.url} alt="Gallery" className="h-24 w-full object-contain" />
+                <input
+                  className={inputClass + " mt-2 py-1.5 text-xs"}
+                  placeholder="Caption for this image"
+                  value={item.caption}
+                  onChange={(e) =>
+                    patch({
+                      galleryImages: brochure.galleryImages.map((g, gIdx) =>
+                        gIdx === idx ? { ...g, caption: e.target.value } : g
+                      ),
+                    })
+                  }
+                />
                 <button
                   type="button"
                   className="absolute top-1 right-1 rounded bg-black/70 px-2 py-0.5 text-[10px] text-white"
                   onClick={() =>
                     patch({
-                      galleryImageUrls: brochure.galleryImageUrls.filter((u) => u !== url),
+                      galleryImages: brochure.galleryImages.filter((_, gIdx) => gIdx !== idx),
                     })
                   }
                 >

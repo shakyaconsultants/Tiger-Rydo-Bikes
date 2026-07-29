@@ -67,6 +67,8 @@ const BrochureSchema = new Schema(
   {
     enabled: { type: Boolean, default: false },
     coverTagline: { type: String, default: "CLEAN ENERGY COMMUTING" },
+    brandName: { type: String, default: "Tiger Rydo" },
+    logoUrl: { type: String, default: "" },
     speedCategory: {
       type: String,
       enum: ["slow_speed", "medium_speed", "high_speed"],
@@ -74,7 +76,26 @@ const BrochureSchema = new Schema(
     },
     shortDescription: { type: String, default: "" },
     colors: { type: [String], default: [] },
-    galleryImageUrls: { type: [String], default: [] },
+    galleryImages: {
+      type: [
+        new Schema(
+          {
+            url: { type: String, required: true },
+            caption: { type: String, default: "" },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
+    mission: { type: String, default: "" },
+    companyDescription: { type: String, default: "" },
+    address: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    email: { type: String, default: "" },
+    website: { type: String, default: "" },
+    qrCodeUrl: { type: String, default: "" },
+    socialLinks: { type: [String], default: [] },
     motor: { type: String, default: "" },
     speed: { type: String, default: "" },
     chassis: { type: String, default: "" },

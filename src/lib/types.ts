@@ -97,10 +97,20 @@ export interface BrochureKeyFeatures {
 export interface ProductBrochure {
   enabled: boolean;
   coverTagline: string;
+  brandName: string;
+  logoUrl: string;
   speedCategory: "slow_speed" | "medium_speed" | "high_speed";
   shortDescription: string;
   colors: string[];
-  galleryImageUrls: string[];
+  galleryImages: { url: string; caption: string }[];
+  mission: string;
+  companyDescription: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  qrCodeUrl: string;
+  socialLinks: string[];
   motor: string;
   speed: string;
   chassis: string;
