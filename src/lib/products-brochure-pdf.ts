@@ -4,12 +4,16 @@ import { getLowestPrice } from "@/lib/product-utils";
 
 type JsPdfDoc = InstanceType<typeof import("jspdf").jsPDF>;
 
-const ORANGE: [number, number, number] = [255, 90, 0];
-const BLACK: [number, number, number] = [18, 18, 18];
-const DARK: [number, number, number] = [28, 28, 28];
-const MUTED: [number, number, number] = [90, 90, 90];
-const LINE: [number, number, number] = [230, 230, 230];
-const LIGHT: [number, number, number] = [248, 248, 248];
+const ORANGE = { r: 255, g: 90, b: 0 } as const;
+const BLACK = { r: 18, g: 18, b: 18 } as const;
+const DARK = { r: 28, g: 28, b: 28 } as const;
+const MUTED = { r: 110, g: 110, b: 110 } as const;
+const LINE = { r: 230, g: 230, b: 230 } as const;
+const LIGHT = { r: 248, g: 248, b: 248 } as const;
+
+function rgb(c: { r: number; g: number; b: number }): [number, number, number] {
+  return [c.r, c.g, c.b];
+}
 
 async function getBase64Image(url: string): Promise<string | null> {
   try {
@@ -39,25 +43,22 @@ function getImageSize(dataUrl: string): Promise<{ w: number; h: number }> {
   });
 }
 
-async function drawContainedImage(
+async function drawCoverImage(
   doc: JsPdfDoc,
   dataUrl: string,
-  boxX: number,
-  boxY: number,
+  x: number,
+  y: number,
   boxW: number,
   boxH: number
 ) {
-  try {
-    const { w, h } = await getImageSize(dataUrl);
-    const scale = Math.min(boxW / w, boxH / h);
-    const drawW = w * scale;
-    const drawH = h * scale;
-    const x = boxX + (boxW - drawW) / 2;
-    const y = boxY + (boxH - drawH) / 2;
-    doc.addImage(dataUrl, imageFormat(dataUrl), x, y, drawW, drawH);
-  } catch {
-    // ignore broken images
-  }
+  const { w, h } = await getImageSize(dataUrl);
+  // "cover" behavior: fill the box and allow overflow crop by positioning.
+  const scale = Math.max(boxW / w, boxH / h);
+  const drawW = w * scale;
+  const drawH = h * scale;
+  const dx = x + (boxW - drawW) / 2;
+  const dy = y + (boxH - drawH) / 2;
+  doc.addImage(dataUrl, imageFormat(dataUrl), dx, dy, drawW, drawH);
 }
 
 function formatRs(price: number): string {
@@ -74,58 +75,102 @@ function slugifyFilename(name: string): string {
   return cleaned || "brochure";
 }
 
-function drawSpeedBadge(doc: JsPdfDoc, text: string, x: number, y: number) {
-  const label = text.toUpperCase();
+function drawPill(
+  doc: JsPdfDoc,
+  text: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  filled: boolean
+) {
+  doc.setDrawColor(...rgb(ORANGE));
+  doc.setLineWidth(0.8);
+  if (filled) {
+    doc.setFillColor(...rgb(ORANGE));
+    doc.roundedRect(x, y, w, h, h / 2, h / 2, "F");
+    doc.setTextColor(255, 255, 255);
+  } else {
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, y, w, h, h / 2, h / 2, "S");
+    doc.setTextColor(...rgb(ORANGE));
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(text, x + w / 2, y + h / 2 + 3, { align: "center" });
+}
+
+function drawSectionLabel(doc: JsPdfDoc, text: string, x: number, y: number) {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...rgb(MUTED));
+  doc.text(text.toUpperCase(), x, y);
+  doc.setDrawColor(...rgb(ORANGE));
+  doc.setLineWidth(0.5);
+  doc.line(x, y + 2, x + Math.min(44, doc.getTextWidth(text.toUpperCase())), y + 2);
+}
+
+function drawBullet(doc: JsPdfDoc, label: string, x: number, y: number) {
+  doc.setFillColor(...rgb(ORANGE));
+  doc.circle(x, y - 1.2, 1.6, "F");
+  doc.setTextColor(...rgb(BLACK));
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  doc.text(label, x + 4, y);
+}
+
+function drawIconYesNo(doc: JsPdfDoc, enabled: boolean, x: number, y: number) {
+  const fill: [number, number, number] = enabled ? rgb(ORANGE) : [245, 245, 245];
+  const text: [number, number, number] = enabled ? [255, 255, 255] : rgb(ORANGE);
+  doc.setFillColor(...fill);
+  doc.roundedRect(x, y, 7.5, 7.5, 1.6, 1.6, "F");
+  doc.setTextColor(...text);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  const w = doc.getTextWidth(label) + 14;
-  doc.setDrawColor(...ORANGE);
-  doc.setLineWidth(0.8);
-  doc.roundedRect(x - w / 2, y - 5, w, 10, 2, 2, "S");
-  doc.setTextColor(...ORANGE);
-  doc.text(label, x, y + 1.5, { align: "center" });
+  doc.text(enabled ? "✓" : "—", x + 3.75, y + 5.6, { align: "center" });
 }
 
-function drawSectionTitle(doc: JsPdfDoc, title: string, x: number, y: number) {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...ORANGE);
-  doc.text(title.toUpperCase(), x, y);
-  doc.setDrawColor(...ORANGE);
-  doc.setLineWidth(0.6);
-  doc.line(x, y + 2.5, x + Math.min(48, doc.getTextWidth(title.toUpperCase())), y + 2.5);
-}
-
-function drawSpecTable(
+function drawFeatureCard(
   doc: JsPdfDoc,
+  title: string,
   rows: { label: string; value: string }[],
   x: number,
   y: number,
-  width: number
-): number {
-  const usable = rows.filter((r) => r.value.trim());
-  let cursor = y;
-  usable.forEach((row, index) => {
-    if (index % 2 === 0) {
-      doc.setFillColor(...LIGHT);
-      doc.rect(x, cursor, width, 9, "F");
-    }
-    doc.setDrawColor(...LINE);
-    doc.setLineWidth(0.2);
-    doc.line(x, cursor + 9, x + width, cursor + 9);
+  w: number,
+  h: number
+) {
+  // shadow
+  doc.setFillColor(0, 0, 0);
+  doc.roundedRect(x + 0.8, y + 0.8, w, h, 4, 4, "F");
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(x, y, w, h, 4, 4, "F");
+  doc.setDrawColor(...rgb(LINE));
+  doc.roundedRect(x, y, w, h, 4, 4, "S");
 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...rgb(BLACK));
+  doc.text(title.toUpperCase(), x + 12, y + 10);
+  doc.setDrawColor(...rgb(ORANGE));
+  doc.setLineWidth(0.5);
+  doc.line(x + 12, y + 14, x + 58, y + 14);
+
+  let cursor = y + 26;
+  rows.forEach((r) => {
+    if (!r.value.trim()) return;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...MUTED);
-    doc.text(row.label, x + 3, cursor + 6);
+    doc.setFontSize(9.5);
+    doc.setTextColor(...rgb(MUTED));
+    doc.text(r.label, x + 12, cursor);
 
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...BLACK);
-    const valueLines = doc.splitTextToSize(row.value, width * 0.55);
-    doc.text(valueLines[0] || row.value, x + width * 0.42, cursor + 6);
-    cursor += 9;
+    doc.setFontSize(10.5);
+    doc.setTextColor(...rgb(BLACK));
+    const lines = doc.splitTextToSize(r.value, w - 24);
+    doc.text(lines, x + 12, cursor + 6);
+    cursor += 16 + Math.max(0, lines.length - 1) * 4;
   });
-  return cursor;
 }
 
 async function addBrochurePages(doc: JsPdfDoc, product: Product) {
@@ -137,329 +182,364 @@ async function addBrochurePages(doc: JsPdfDoc, product: Product) {
 
   const coverImage = product.imageUrl ? await getBase64Image(product.imageUrl) : null;
   const galleryImages = (
-    await Promise.all(brochure.galleryImageUrls.slice(0, 4).map((url) => getBase64Image(url)))
+    await Promise.all(brochure.galleryImageUrls.slice(0, 3).map((url) => getBase64Image(url)))
   ).filter((img): img is string => Boolean(img));
 
   const modelName = (product.name || "Model").toUpperCase();
   const speedLabel = speedCategoryLabel(brochure.speedCategory);
-  const description =
+  const price = getLowestPrice(product);
+
+  const shortStory =
     brochure.shortDescription.trim() ||
-    product.description ||
-    product.tagline ||
-    `${product.name} is designed for clean, stylish, and comfortable city commuting.`;
+    `${product.name} brings clean, bold electric comfort to everyday city commutes.`;
 
   // =========================
-  // PAGE 1 — COVER
+  // PAGE 1 — HERO / COVER
   // =========================
-  doc.setFillColor(...DARK);
+  doc.setFillColor(...rgb(DARK));
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 
-  // Top orange accent bar
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, 0, pageWidth, 4, "F");
+  // subtle mesh
+  doc.setFillColor(255, 90, 0);
+  doc.circle(pageWidth * 0.18, pageHeight * 0.28, 55, "F");
+  doc.setFillColor(70, 70, 70);
+  doc.circle(pageWidth * 0.85, pageHeight * 0.18, 70, "F");
+  doc.setFillColor(40, 40, 40);
+  doc.circle(pageWidth * 0.65, pageHeight * 0.70, 120, "F");
 
+  // top / bottom accent
+  doc.setFillColor(...rgb(ORANGE));
+  doc.rect(0, 0, pageWidth, 6, "F");
+  doc.rect(0, pageHeight - 6, pageWidth, 6, "F");
+
+  // header text hierarchy
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text((brochure.coverTagline || "CLEAN ENERGY COMMUTING").toUpperCase(), pageWidth / 2, 28, {
-    align: "center",
-  });
+  doc.setFontSize(16);
+  doc.text((brochure.coverTagline || "CLEAN ENERGY COMMUTING").toUpperCase(), margin, 22);
 
-  doc.setFontSize(42);
-  doc.setTextColor(...ORANGE);
-  doc.text(modelName, pageWidth / 2, 52, { align: "center" });
-
-  drawSpeedBadge(doc, speedLabel, pageWidth / 2 - 45, 66);
-  drawSpeedBadge(doc, speedLabel, pageWidth / 2 + 45, 66);
-
-  // Hero image panel
-  doc.setFillColor(38, 38, 38);
-  doc.roundedRect(margin, 84, contentW, 170, 4, 4, "F");
-  if (coverImage) {
-    await drawContainedImage(doc, coverImage, margin + 8, 92, contentW - 16, 154);
-  } else {
-    doc.setTextColor(120);
-    doc.setFontSize(12);
-    doc.text("Product image", pageWidth / 2, 170, { align: "center" });
-  }
-
-  doc.setTextColor(200, 200, 200);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.text(product.tagline || "Built for the City. Smart. Clean. Electric.", pageWidth / 2, 272, {
-    align: "center",
-  });
-
+  doc.setTextColor(...rgb(ORANGE));
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(...ORANGE);
-  doc.text(formatRs(getLowestPrice(product)), pageWidth / 2, 288, { align: "center" });
+  doc.setFontSize(46);
+  doc.text(modelName, margin, 66);
 
+  // tagline
+  doc.setTextColor(210, 210, 210);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(150, 150, 150);
-  doc.text("Tiger Rydo", pageWidth / 2, pageHeight - 18, { align: "center" });
+  doc.setFontSize(12.5);
+  const tagline = product.tagline || "Built for the City. Smart. Clean. Electric.";
+  doc.text(tagline, margin, 86);
 
-  // Bottom orange accent
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
-
-  // =========================
-  // PAGE 2 — OVERVIEW
-  // =========================
-  doc.addPage();
-  doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, pageWidth, pageHeight, "F");
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, 0, pageWidth, 4, "F");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
-  doc.setTextColor(...BLACK);
-  doc.text(modelName, margin, 30);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10.5);
-  doc.setTextColor(...MUTED);
-  const descLines = doc.splitTextToSize(description, contentW);
-  doc.text(descLines.slice(0, 6), margin, 42);
-  let y = 42 + Math.min(descLines.length, 6) * 5.2 + 10;
-
-  if (brochure.colors.length > 0) {
-    drawSectionTitle(doc, "Colors Available", margin, y);
-    y += 10;
-    let colorX = margin;
-    brochure.colors.forEach((color) => {
-      const chipW = Math.max(28, doc.getTextWidth(color) + 12);
-      if (colorX + chipW > pageWidth - margin) {
-        colorX = margin;
-        y += 12;
-      }
-      doc.setFillColor(...LIGHT);
-      doc.setDrawColor(...LINE);
-      doc.roundedRect(colorX, y - 5, chipW, 9, 2, 2, "FD");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...BLACK);
-      doc.text(color.toUpperCase(), colorX + chipW / 2, y + 1, { align: "center" });
-      colorX += chipW + 5;
-    });
-    y += 16;
-  }
-
-  // Main + gallery visuals
-  const mainImgH = 95;
-  doc.setFillColor(...LIGHT);
-  doc.roundedRect(margin, y, contentW, mainImgH, 3, 3, "F");
-  if (coverImage) {
-    await drawContainedImage(doc, coverImage, margin + 6, y + 4, contentW - 12, mainImgH - 8);
-  }
-  y += mainImgH + 8;
-
-  if (galleryImages.length > 0) {
-    const gap = 5;
-    const cols = Math.min(galleryImages.length, 3);
-    const tileW = (contentW - gap * (cols - 1)) / cols;
-    const tileH = 48;
-    for (let i = 0; i < cols; i++) {
-      const x = margin + i * (tileW + gap);
-      doc.setFillColor(...LIGHT);
-      doc.roundedRect(x, y, tileW, tileH, 2, 2, "F");
-      await drawContainedImage(doc, galleryImages[i], x + 3, y + 3, tileW - 6, tileH - 6);
-    }
-  }
-
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
-
-  // =========================
-  // PAGE 3 — SPECIFICATION
-  // =========================
-  doc.addPage();
-  doc.setFillColor(255, 255, 255);
-  doc.rect(0, 0, pageWidth, pageHeight, "F");
-
-  // Dark header band
-  doc.setFillColor(...BLACK);
-  doc.rect(0, 0, pageWidth, 34, "F");
-  doc.setTextColor(255, 255, 255);
+  // hero price + CTA
+  const pillW = 62 + doc.getTextWidth(formatRs(price));
+  drawPill(doc, "VIEW SPEC", margin, pageHeight - 26, 32, 10, false);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("SPECIFICATION", margin, 21);
-  doc.setFontSize(9);
-  doc.setTextColor(...ORANGE);
-  doc.text(modelName, pageWidth - margin, 21, { align: "right" });
+  doc.setTextColor(...rgb(ORANGE));
+  doc.text(formatRs(price), margin, pageHeight - 44);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(190, 190, 190);
+  doc.text(speedLabel.toUpperCase(), margin, pageHeight - 28);
 
-  y = 46;
-
-  if (brochure.colors.length > 0) {
-    drawSectionTitle(doc, "Colors Available", margin, y);
-    y += 9;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...BLACK);
-    doc.text(brochure.colors.map((c) => c.toUpperCase()).join("   ·   "), margin, y);
-    y += 12;
+  // hero image dominates: cover + bleed
+  if (coverImage) {
+    doc.setFillColor(0, 0, 0);
+    doc.roundedRect(margin - 6, 98 + 1, contentW + 12, 110, 8, 8, "F");
+    await drawCoverImage(doc, coverImage, margin - 10, 98, contentW + 22, 120);
+  } else {
+    doc.setTextColor(160, 160, 160);
+    doc.setFontSize(12);
+    doc.text("Add product image to generate premium brochure.", margin, 140);
   }
 
-  const leftW = contentW * 0.48;
-  const rightW = contentW * 0.48;
-  const rightX = margin + contentW * 0.52;
+  // =========================
+  // PAGE 2 — STORY / LIFESTYLE
+  // =========================
+  doc.addPage();
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
 
-  drawSectionTitle(doc, "Motor / Speed / Chassis", margin, y);
-  drawSectionTitle(doc, "Brake / Tyre / Weight", rightX, y);
-  y += 8;
+  // soft background accents
+  doc.setFillColor(255, 90, 0);
+  doc.circle(pageWidth * 0.14, 36, 70, "F");
+  doc.setFillColor(245, 245, 245);
+  doc.circle(pageWidth * 0.82, 60, 100, "F");
 
-  const motorRows = [
-    { label: "Motor", value: brochure.motor },
-    { label: "Speed", value: brochure.speed },
-    { label: "Chassis", value: brochure.chassis },
-    { label: "Suspension", value: brochure.suspension },
-    { label: "Other", value: brochure.otherFeature },
-  ];
-  const brakeRows = [
-    { label: "Brake", value: brochure.brakeSystem },
-    { label: "Tyre", value: brochure.tyre },
-    {
-      label: "Tyre Size",
-      value: [
-        brochure.tyreSizeFront && `Front ${brochure.tyreSizeFront}`,
-        brochure.tyreSizeRear && `Rear ${brochure.tyreSizeRear}`,
-      ]
-        .filter(Boolean)
-        .join(", "),
-    },
-    { label: "Weight", value: brochure.weight },
-    { label: "Speedometer", value: brochure.speedometer },
-  ];
+  // Left story block
+  drawSectionLabel(doc, "Why Royal", margin, 28);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...rgb(BLACK));
+  doc.setFontSize(34);
+  doc.text(modelName, margin, 52);
 
-  const leftEnd = drawSpecTable(doc, motorRows, margin, y, leftW);
-  const rightEnd = drawSpecTable(doc, brakeRows, rightX, y, rightW);
-  y = Math.max(leftEnd, rightEnd) + 12;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12.5);
+  doc.setTextColor(...rgb(MUTED));
+  const storyLines = doc.splitTextToSize(shortStory, contentW * 0.44);
+  doc.text(storyLines, margin, 70);
 
-  drawSectionTitle(doc, "Key Features", margin, y);
-  y += 8;
-
-  const featureCols = 2;
-  const featureW = (contentW - 6) / featureCols;
-  KEY_FEATURE_LABELS.forEach(({ key, label }, index) => {
-    const col = index % featureCols;
-    const row = Math.floor(index / featureCols);
-    const x = margin + col * (featureW + 6);
-    const fy = y + row * 11;
-    const on = brochure.keyFeatures[key];
-
-    doc.setFillColor(...LIGHT);
-    doc.roundedRect(x, fy, featureW, 9, 1.5, 1.5, "F");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...BLACK);
-    doc.text(label, x + 3, fy + 6);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(on ? ORANGE[0] : 150, on ? ORANGE[1] : 150, on ? ORANGE[2] : 150);
-    doc.text(on ? "Yes" : "No", x + featureW - 3, fy + 6, { align: "right" });
+  let bxY = 122;
+  const bullets = brochure.highlightFeatures.length
+    ? brochure.highlightFeatures.slice(0, 3)
+    : ["Efficient Batteries", "Quick Charge", "Hydraulic Suspension"];
+  bullets.forEach((b) => {
+    drawBullet(doc, b, margin, bxY);
+    bxY += 10.5;
   });
-  y += Math.ceil(KEY_FEATURE_LABELS.length / featureCols) * 11 + 10;
 
-  drawSectionTitle(doc, "Battery & Lighting", margin, y);
-  y += 8;
-  const batteryEnd = drawSpecTable(
+  // Right: hero image on glass card (asymmetric)
+  const imgX = margin + contentW * 0.52;
+  const imgY = 62;
+  const imgW = contentW * 0.46;
+  const imgH = 140;
+
+  // card shell
+  // subtle elevation (shadow first, then card)
+  doc.setFillColor(0, 0, 0);
+  doc.roundedRect(imgX + 1, imgY + 1, imgW, imgH, 10, 10, "F");
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(imgX, imgY, imgW, imgH, 10, 10, "F");
+  doc.setDrawColor(...rgb(LINE));
+  doc.roundedRect(imgX, imgY, imgW, imgH, 10, 10, "S");
+
+  if (coverImage) {
+    await drawCoverImage(doc, coverImage, imgX - 8, imgY - 6, imgW + 16, imgH + 10);
+  }
+
+  // Color chips
+  const chipsY = 220;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...rgb(ORANGE));
+  doc.text("Colors", margin, chipsY);
+
+  let chipX = margin + 26;
+  const chipBaseY = chipsY + 2;
+  brochure.colors.slice(0, 6).forEach((c, idx) => {
+    const label = c.toUpperCase();
+    const w = Math.min(46 + doc.getTextWidth(label) / 1.6, 78);
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...rgb(LINE));
+    doc.roundedRect(chipX, chipBaseY + idx * 12, w, 10, 5, 5, "S");
+    doc.setTextColor(...rgb(BLACK));
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(label, chipX + w / 2, chipBaseY + idx * 12 + 3.5, { align: "center" });
+  });
+
+  // Highlights chips
+  const hTitleY = pageHeight - 34;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...rgb(ORANGE));
+  doc.text("Highlights", margin, hTitleY);
+  let highlightChipX = margin;
+  let highlightChipY = hTitleY + 10;
+  const maxChipWidth = pageWidth - margin * 2;
+  brochure.highlightFeatures.slice(0, 8).forEach((f) => {
+    const txt = f.toUpperCase();
+    const w = Math.min(34 + doc.getTextWidth(txt) / 2.0, 70);
+    if (highlightChipX + w > margin + maxChipWidth) {
+      highlightChipX = margin;
+      highlightChipY += 10.5;
+    }
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...rgb(ORANGE));
+    doc.roundedRect(highlightChipX, highlightChipY, w, 8.5, 4, 4, "S");
+    doc.setTextColor(...rgb(ORANGE));
+    doc.setFontSize(7.8);
+    doc.setFont("helvetica", "bold");
+    doc.text(txt, highlightChipX + w / 2, highlightChipY + 6, { align: "center" });
+    highlightChipX += w + 4;
+  });
+
+  // =========================
+  // PAGE 3 — SPECIFICATIONS (premium cards)
+  // =========================
+  doc.addPage();
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
+  doc.setFillColor(...rgb(BLACK));
+  doc.rect(0, 0, pageWidth, 30, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("SPECIFICATIONS", margin, 20);
+  doc.setFontSize(11);
+  doc.setTextColor(...rgb(ORANGE));
+  doc.text(modelName, pageWidth - margin, 20, { align: "right" });
+
+  const gridGap = 10;
+  const cardW = (contentW - gridGap) / 2;
+  let cy = 40;
+  drawFeatureCard(
     doc,
+    "Powertrain",
+    [
+      { label: "Motor", value: brochure.motor },
+      { label: "Speed", value: brochure.speed },
+      { label: "Chassis", value: brochure.chassis },
+      { label: "Other", value: brochure.otherFeature },
+    ],
+    margin,
+    cy,
+    cardW,
+    82
+  );
+  drawFeatureCard(
+    doc,
+    "Ride & Comfort",
+    [
+      { label: "Suspension", value: brochure.suspension },
+      { label: "Brake", value: brochure.brakeSystem },
+      { label: "Tyre", value: brochure.tyre },
+      {
+        label: "Weight",
+        value: brochure.weight,
+      },
+    ],
+    margin + cardW + gridGap,
+    cy,
+    cardW,
+    82
+  );
+
+  cy += 92;
+
+  drawFeatureCard(
+    doc,
+    "Battery & Charge",
     [
       { label: "Battery", value: brochure.battery },
       { label: "Charger", value: brochure.charger },
-      { label: "Lithium Charge", value: brochure.chargingTimeLithium },
-      { label: "Lead Acid Charge", value: brochure.chargingTimeLeadAcid },
+      { label: "Lithium", value: brochure.chargingTimeLithium },
+      { label: "Lead Acid", value: brochure.chargingTimeLeadAcid },
       { label: "Head Light", value: brochure.headLight },
     ],
     margin,
-    y,
-    contentW
+    cy,
+    cardW,
+    98
   );
-  y = batteryEnd + 12;
 
-  if (brochure.highlightFeatures.length > 0) {
-    drawSectionTitle(doc, "Highlights", margin, y);
-    y += 9;
-    const cols = 4;
-    const gap = 5;
-    const boxW = (contentW - gap * (cols - 1)) / cols;
-    brochure.highlightFeatures.slice(0, 8).forEach((feature, index) => {
-      const col = index % cols;
-      const row = Math.floor(index / cols);
-      const x = margin + col * (boxW + gap);
-      const by = y + row * 28;
+  // Safety / features (as icon list)
+  const rightX = margin + cardW + gridGap;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...rgb(LINE));
+  doc.roundedRect(rightX, cy, cardW, 98, 10, 10, "S");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...rgb(BLACK));
+  doc.text("Safety & Features", rightX + 12, cy + 12);
+  doc.setDrawColor(...rgb(ORANGE));
+  doc.setLineWidth(0.5);
+  doc.line(rightX + 12, cy + 16, rightX + 70, cy + 16);
 
-      doc.setFillColor(...BLACK);
-      doc.roundedRect(x, by, boxW, 24, 2, 2, "F");
-      doc.setFillColor(...ORANGE);
-      doc.circle(x + boxW / 2, by + 7, 2.2, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
-      doc.setTextColor(255, 255, 255);
-      const lines = doc.splitTextToSize(feature, boxW - 6);
-      doc.text(lines.slice(0, 2), x + boxW / 2, by + 14, { align: "center" });
-    });
-  }
+  let fy = cy + 26;
+  const featureRows = KEY_FEATURE_LABELS.map(({ key, label }) => ({
+    label,
+    enabled: Boolean(brochure.keyFeatures[key]),
+  }));
+  featureRows.forEach((fr) => {
+    if (fy > cy + 88) return;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    doc.setTextColor(...rgb(MUTED));
+    doc.text(fr.label, rightX + 12, fy + 4);
+    drawIconYesNo(doc, fr.enabled, rightX + cardW - 22, fy + 1);
+    fy += 10.5;
+  });
 
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
+  // Key Performance strip
+  const stripY = cy + 108;
+  doc.setFillColor(...rgb(ORANGE));
+  doc.setDrawColor(...rgb(ORANGE));
+  doc.roundedRect(margin, stripY, contentW, 18, 10, 10, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  const tyreSize = [
+    brochure.tyreSizeFront && `Front ${brochure.tyreSizeFront}`,
+    brochure.tyreSizeRear && `Rear ${brochure.tyreSizeRear}`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const perfText = [
+    `Tyre: ${brochure.tyre}`,
+    tyreSize ? tyreSize : "",
+    `Speedometer: ${brochure.speedometer}`,
+  ]
+    .filter(Boolean)
+    .join("  •  ");
+  doc.text(perfText, margin + 8, stripY + 12);
 
   // =========================
-  // PAGE 4 — ABOUT
+  // PAGE 4 — ABOUT / BRAND STORY
   // =========================
   doc.addPage();
-  doc.setFillColor(...DARK);
+  doc.setFillColor(...rgb(DARK));
   doc.rect(0, 0, pageWidth, pageHeight, "F");
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, 0, pageWidth, 4, "F");
+  doc.setFillColor(...rgb(ORANGE));
+  doc.rect(0, 0, pageWidth, 6, "F");
+  doc.setFillColor(...rgb(ORANGE));
+  doc.rect(0, pageHeight - 6, pageWidth, 6, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.setTextColor(...ORANGE);
-  doc.text("ABOUT US", margin, 40);
+  doc.setTextColor(...rgb(ORANGE));
+  doc.text("SCAN & VISIT", margin, 36);
 
+  doc.setFontSize(11.5);
+  doc.setTextColor(230, 230, 230);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(220, 220, 220);
-  const about = doc.splitTextToSize(
-    "Tiger Rydo is building clean, bold electric mobility for modern cities. Our mission is a better, cleaner and greener future — stylish e-bikes designed for everyday comfort, performance, and reliability.",
-    contentW
-  );
-  doc.text(about, margin, 56);
+  const about =
+    "An Indian manufacturer of electric two-wheelers, Tiger Rydo Bikes, founded with a mission to build a better, cleaner, and greener future. We engineer premium e-bikes for everyday comfort, performance, and reliability.";
+  const aboutLines = doc.splitTextToSize(about, contentW * 0.72);
+  doc.text(aboutLines, margin, 52);
 
-  y = 56 + about.length * 6 + 18;
-  doc.setFillColor(38, 38, 38);
-  doc.roundedRect(margin, y, contentW, 70, 3, 3, "F");
+  // Product summary card
+  const cardX = margin;
+  const cardY = 150;
+  const cardH = 72;
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(cardX, cardY, contentW * 0.62, cardH, 10, 10, "F");
+  doc.setDrawColor(...rgb(LINE));
+  doc.roundedRect(cardX, cardY, contentW * 0.62, cardH, 10, 10, "S");
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(...ORANGE);
-  doc.text(modelName, margin + 10, y + 16);
+  doc.setFontSize(14);
+  doc.setTextColor(...rgb(BLACK));
+  doc.text(modelName, cardX + 14, cardY + 18);
+  doc.setFontSize(10.5);
+  doc.setTextColor(...rgb(MUTED));
+  doc.text((product.tagline || "Ride Bold. Ride Clean. Ride Future.").slice(0, 70), cardX + 14, cardY + 32);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(...rgb(ORANGE));
+  doc.text(formatRs(price), cardX + 14, cardY + 54);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(210, 210, 210);
-  doc.text(product.tagline || "Ride Bold. Ride Clean. Ride Future.", margin + 10, y + 28);
-  doc.text(`Starting at ${formatRs(getLowestPrice(product))}`, margin + 10, y + 42);
-  doc.text(`Category: ${speedLabel}`, margin + 10, y + 54);
-
-  if (coverImage) {
-    await drawContainedImage(doc, coverImage, pageWidth - margin - 70, y + 8, 58, 54);
+  // Right: lifestyle image or gallery
+  if (galleryImages[0]) {
+    doc.setFillColor(0, 0, 0);
+    doc.roundedRect(pageWidth - margin - 58, cardY + 6, 58, 58, 10, 10, "F");
+    await drawCoverImage(
+      doc,
+      galleryImages[0],
+      pageWidth - margin - 58,
+      cardY + 8,
+      58,
+      58
+    );
   }
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text("Tiger Rydo", margin, pageHeight - 36);
+  // Footer
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(160, 160, 160);
-  doc.text("www.tigerrydo.com", margin, pageHeight - 26);
-  doc.text("Clean Energy Commuting", margin, pageHeight - 16);
-
-  doc.setFillColor(...ORANGE);
-  doc.rect(0, pageHeight - 4, pageWidth, 4, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(200, 200, 200);
+  doc.text("Tiger Rydo", margin, pageHeight - 28);
+  doc.text("www.tigerrydo.com", margin, pageHeight - 18);
 }
 
 /** Download brochure PDF for a single e-bike, named after the bike title. */
