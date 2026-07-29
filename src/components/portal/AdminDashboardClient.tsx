@@ -385,10 +385,11 @@ export default function AdminDashboardClient({
   }
 
   async function handleDownloadBrochurePdf() {
+    if (!product) return;
     setPdfLoading(true);
     try {
-      await downloadProductsBrochurePdf(products.filter((p) => p._id || p.name));
-      setMessage("Brochure PDF downloaded");
+      await downloadProductsBrochurePdf(product);
+      setMessage(`Brochure downloaded for ${product.name}`);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "PDF download failed");
     } finally {
