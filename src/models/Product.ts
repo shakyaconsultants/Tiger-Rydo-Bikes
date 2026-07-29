@@ -1,4 +1,5 @@
 import mongoose, { Schema, models, model, Model } from "mongoose";
+import type { ProductBrochure } from "@/lib/types";
 
 export interface IProductParameter {
   label: string;
@@ -26,7 +27,7 @@ export interface IProduct {
   videoUrl: string;
   imageUrl?: string;
   batteryVariants: IBatteryVariant[];
-
+  brochure?: ProductBrochure;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -51,6 +52,51 @@ const BatteryVariantSchema = new Schema<IBatteryVariant>(
   { _id: false }
 );
 
+const BrochureKeyFeaturesSchema = new Schema(
+  {
+    antiTheftAlarm: { type: Boolean, default: true },
+    centralLocking: { type: Boolean, default: true },
+    parkingSwitch: { type: Boolean, default: true },
+    reverseGear: { type: Boolean, default: true },
+    usbCharger: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
+const BrochureSchema = new Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    coverTagline: { type: String, default: "CLEAN ENERGY COMMUTING" },
+    speedCategory: {
+      type: String,
+      enum: ["slow_speed", "medium_speed", "high_speed"],
+      default: "slow_speed",
+    },
+    shortDescription: { type: String, default: "" },
+    colors: { type: [String], default: [] },
+    galleryImageUrls: { type: [String], default: [] },
+    motor: { type: String, default: "" },
+    speed: { type: String, default: "" },
+    chassis: { type: String, default: "" },
+    suspension: { type: String, default: "" },
+    otherFeature: { type: String, default: "" },
+    keyFeatures: { type: BrochureKeyFeaturesSchema, default: () => ({}) },
+    brakeSystem: { type: String, default: "" },
+    tyre: { type: String, default: "" },
+    tyreSizeFront: { type: String, default: "" },
+    tyreSizeRear: { type: String, default: "" },
+    weight: { type: String, default: "" },
+    speedometer: { type: String, default: "" },
+    battery: { type: String, default: "" },
+    charger: { type: String, default: "" },
+    chargingTimeLithium: { type: String, default: "" },
+    chargingTimeLeadAcid: { type: String, default: "" },
+    headLight: { type: String, default: "" },
+    highlightFeatures: { type: [String], default: [] },
+  },
+  { _id: false }
+);
+
 const ProductSchema = new Schema<IProduct>(
   {
     name: { type: String, required: true },
@@ -61,6 +107,7 @@ const ProductSchema = new Schema<IProduct>(
     videoUrl: { type: String, required: true },
     imageUrl: { type: String },
     batteryVariants: [BatteryVariantSchema],
+    brochure: { type: BrochureSchema, default: () => ({}) },
   },
   { timestamps: true }
 );

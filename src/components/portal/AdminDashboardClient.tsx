@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import DealerLogoutButton from "@/components/DealerLogoutButton";
 import Button from "@/components/ui/Button";
 import { notifyContentUpdated } from "@/lib/content-sync";
+import { defaultBrochure, normalizeBrochure } from "@/lib/brochure";
+import { downloadProductsBrochurePdf } from "@/lib/products-brochure-pdf";
 import PlaceOrderPanel from "./PlaceOrderPanel";
 import OrdersPanel from "./OrdersPanel";
 import ListedProductsPanel from "./ListedProductsPanel";
@@ -20,6 +22,7 @@ import type {
 } from "@/lib/types";
 import { formatPrice, isMongoObjectId } from "@/lib/product-utils";
 import ImageUploadField from "./ImageUploadField";
+import BrochureForm from "./BrochureForm";
 import {
   PortalShell,
   SimpleTabs,
@@ -59,6 +62,14 @@ function newProduct(): Product {
       id: "v1", name: "1.8 kWh", capacity: "1.8 kWh", range: 65, price: 74999,
       chargeTime: "5 hrs", chargePercent: "0-80%", motor: "2.5 kW", parameters: [],
     }],
+    brochure: defaultBrochure(),
+  };
+}
+
+function withBrochure(product: Product): Product {
+  return {
+    ...product,
+    brochure: normalizeBrochure(product.brochure),
   };
 }
 
@@ -88,7 +99,9 @@ export default function AdminDashboardClient({
   const [inquiries, setInquiries] = useState(initialInquiries);
   const [tab, setTab] = useState<Tab>("website");
   const [settings, setSettings] = useState(initialSettings);
-  const [products, setProducts] = useState(initialProducts.length ? initialProducts : [newProduct()]);
+  const [products, setProducts] = useState(
+    (initialProducts.length ? initialProducts : [newProduct()]).map(withBrochure)
+  );
   const [dealers, setDealers] = useState(initialDealers.length ? initialDealers : [newDealer()]);
   const [orders, setOrders] = useState(initialOrders);
   const [selectedProduct, setSelectedProduct] = useState(0);
@@ -99,6 +112,7 @@ export default function AdminDashboardClient({
   const [productErrors, setProductErrors] = useState<Record<string, string | undefined>>({});
   const [dealerErrors, setDealerErrors] = useState<Record<string, string | undefined>>({});
   const [orderLoading, setOrderLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const product = products[selectedProduct];
   const dealer = dealers[selectedDealer];
@@ -120,7 +134,7 @@ export default function AdminDashboardClient({
   }, [initialOrders]);
 
   useEffect(() => {
-    setProducts(initialProducts.length ? initialProducts : [newProduct()]);
+    setProducts((initialProducts.length ? initialProducts : [newProduct()]).map(withBrochure));
   }, [initialProducts]);
 
   useEffect(() => {
@@ -214,6 +228,7 @@ export default function AdminDashboardClient({
       featured: Boolean(product.featured),
       videoUrl: product.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ",
       description: product.description || product.tagline || product.name,
+      brochure: normalizeBrochure(product.brochure),
     };
     const { _id, ...createPayload } = payload;
     const updatePayload = { ...payload };
@@ -232,7 +247,7 @@ export default function AdminDashboardClient({
       setMessage(data.error || "Save failed");
       return;
     }
-    setProducts((p) => p.map((x, i) => (i === selectedProduct ? data.product : x)));
+    setProducts((p) => p.map((x, i) => (i === selectedProduct ? withBrochure(data.product) : x)));
     setMessage(isDbProduct ? "Product updated!" : "Product saved to website!");
     afterContentChange();
   }
@@ -365,8 +380,20 @@ export default function AdminDashboardClient({
 
   function updateProduct(patch: Partial<Product>) {
     setProducts((prev) =>
-      prev.map((p, i) => (i === selectedProduct ? { ...p, ...patch } : p))
+      prev.map((p, i) => (i === selectedProduct ? withBrochure({ ...p, ...patch }) : p))
     );
+  }
+
+  async function handleDownloadBrochurePdf() {
+    setPdfLoading(true);
+    try {
+      await downloadProductsBrochurePdf(products.filter((p) => p._id || p.name));
+      setMessage("Brochure PDF downloaded");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "PDF download failed");
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   function updateVariant(field: string, value: string | number) {
@@ -454,7 +481,7 @@ export default function AdminDashboardClient({
       )}
 
       {tab === "products" && (
-        <Panel title="E-Bike Catalog" description="Manage products shown on the public website.">
+        <Panel title="E-Bike Catalog" description="Manage products shown on the public website and fill brochure details for Royal-style PDF export.">
           <ActionBar>
             <select
               className={inputClass + " max-w-[200px]"}
@@ -465,6 +492,7 @@ export default function AdminDashboardClient({
                 <option key={p.slug + i} value={i}>
                   {p.name || `Product ${i + 1}`}
                   {!isMongoObjectId(p._id) && p._id ? " (default)" : ""}
+                  {p.brochure?.enabled ? " · Brochure" : ""}
                 </option>
               ))}
             </select>
@@ -486,6 +514,15 @@ export default function AdminDashboardClient({
               onClick={deleteProduct}
             >
               Delete
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="hover:border-[#FF5A00] hover:bg-[#FFF0E6] hover:text-[#FF5A00]"
+              onClick={handleDownloadBrochurePdf}
+              disabled={pdfLoading}
+            >
+              {pdfLoading ? "Generating..." : "Download Brochure PDF"}
             </Button>
           </ActionBar>
 
@@ -532,6 +569,11 @@ export default function AdminDashboardClient({
                   </span>
                 </span>
               </label>
+
+              <BrochureForm
+                brochure={product.brochure || defaultBrochure()}
+                onChange={(brochure) => updateProduct({ brochure })}
+              />
             </>
           )}
         </Panel>

@@ -126,7 +126,7 @@ export default function BrochureForm({ brochure, onChange }: Props) {
         <div>
           <h3 className="text-base font-bold text-[#111]">Product Brochure</h3>
           <p className="mt-1 text-xs text-[#888]">
-            Fill these fields to generate a Royal-style brochure PDF for this product.
+            Fill these fields to generate a Royal-style brochure PDF for this e-bike.
           </p>
         </div>
         <div className="w-full max-w-xs sm:w-auto">
@@ -226,7 +226,7 @@ export default function BrochureForm({ brochure, onChange }: Props) {
           label="Add gallery images"
           value=""
           multiple
-          folder="tiger-rydo/listed-products/gallery"
+          folder="tiger-rydo/products/gallery"
           onChange={() => undefined}
           onBatchUpload={(urls) =>
             patch({

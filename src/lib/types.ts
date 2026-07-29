@@ -25,6 +25,7 @@ export interface Product {
   videoUrl: string;
   imageUrl?: string;
   batteryVariants: BatteryVariant[];
+  brochure?: ProductBrochure;
 }
 
 export interface Dealer {
@@ -126,7 +127,6 @@ export interface ListedProduct {
   price: number;
   imageUrl: string;
   isActive: boolean;
-  brochure?: ProductBrochure;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Product, type IProduct } from "@/models/Product";
 import { FALLBACK_PRODUCTS } from "@/lib/constants";
 import { getHiddenProductSlugs } from "@/lib/siteSettings";
+import { normalizeBrochure } from "@/lib/brochure";
 import type { Product as ProductType } from "@/lib/types";
 
 export { formatPrice, getLowestPrice, isMongoObjectId } from "@/lib/product-utils";
@@ -17,6 +18,7 @@ function mapProduct(p: IProduct & { _id?: unknown }): ProductType {
     videoUrl: p.videoUrl,
     imageUrl: p.imageUrl,
     batteryVariants: p.batteryVariants,
+    brochure: normalizeBrochure(p.brochure),
   };
 }
 
