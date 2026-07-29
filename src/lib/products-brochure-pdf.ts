@@ -15,6 +15,8 @@ const BLACK = [18, 18, 18] as const;
 const WHITE = [255, 255, 255] as const;
 const LINE = [226, 226, 226] as const;
 const MUTED = [105, 105, 105] as const;
+const SOFT_PAPER = [250, 248, 244] as const;
+const PANEL = [23, 19, 15] as const;
 
 function sp(step: number): number {
   return BASE_SPACE * step;
@@ -32,6 +34,17 @@ function slugifyFilename(name: string): string {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
   return cleaned || "brochure";
+}
+
+function clampOneLineWithEllipsis(doc: JsPdfDoc, text: string, width: number): string {
+  const raw = text.trim();
+  if (!raw) return "";
+  if (doc.getTextWidth(raw) <= width) return raw;
+  let out = raw;
+  while (out.length > 1 && doc.getTextWidth(`${out}...`) > width) {
+    out = out.slice(0, -1);
+  }
+  return `${out}...`;
 }
 
 async function getBase64Image(url: string): Promise<string | null> {
@@ -121,29 +134,48 @@ async function drawContainImage(doc: JsPdfDoc, dataUrl: string, rect: Rect, fill
 }
 
 function drawBranding(doc: JsPdfDoc, brandName: string, logoUrl: string, safe: Rect, pageNo: number) {
-  const topBar: Rect = { x: 0, y: 0, w: doc.internal.pageSize.getWidth(), h: sp(0.9) };
+  void logoUrl;
+  // topbar (gradient-like two-tone)
+  const pageW = doc.internal.pageSize.getWidth();
   doc.setFillColor(...ORANGE);
-  doc.rect(topBar.x, topBar.y, topBar.w, topBar.h, "F");
+  doc.rect(0, 0, pageW * 0.55, sp(0.9), "F");
+  doc.setFillColor(185, 53, 10);
+  doc.rect(pageW * 0.55, 0, pageW * 0.45, sp(0.9), "F");
+
+  // logo stripes
+  const stripeX = safe.x;
+  const stripeBaseY = safe.y - sp(0.9);
+  const stripeW = 1.1;
+  const stripeGap = 0.9;
+  [4.2, 2.8, 1.7].forEach((h, idx) => {
+    doc.setFillColor(...ORANGE);
+    doc.roundedRect(stripeX + idx * (stripeW + stripeGap), stripeBaseY - h, stripeW, h, 0.3, 0.3, "F");
+  });
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   doc.setTextColor(...BLACK);
-  doc.text(brandName || "Tiger Rydo", safe.x, safe.y - sp(0.6));
+  doc.text("TIGER", stripeX + 6.8, safe.y - sp(0.9));
+  doc.setTextColor(...ORANGE);
+  doc.text("RYDO", stripeX + 6.8, safe.y + sp(0.65));
+
+  // page badge
+  const badgeText = `PAGE ${String(pageNo).padStart(2, "0")}`;
+  const badgeW = Math.max(22, doc.getTextWidth(badgeText) + 10);
+  const badgeH = 7;
+  const badgeX = safe.x + safe.w - badgeW;
+  const badgeY = safe.y - 6.8;
+  doc.setDrawColor(...LINE);
+  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 3.5, 3.5, "S");
+  doc.setTextColor(...MUTED);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(...MUTED);
-  doc.text(`PAGE ${pageNo}`, safe.x + safe.w, safe.y - sp(0.6), { align: "right" });
+  doc.text(badgeText, badgeX + badgeW / 2, badgeY + 4.8, { align: "center" });
 
-  if (logoUrl) {
-    // Image logo is rendered in page-specific functions where async is available.
-  } else {
-    doc.setDrawColor(...ORANGE);
-    doc.roundedRect(safe.x + safe.w - 26, safe.y - 7, 24, 5, 2.5, 2.5, "S");
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...ORANGE);
-    doc.setFontSize(7.5);
-    doc.text((brandName || "Tiger Rydo").toUpperCase(), safe.x + safe.w - 14, safe.y - 3.2, { align: "center" });
-  }
+  // thin brand fallback mark on right if no image logo
+  if (!brandName?.trim()) return;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...BLACK);
 }
 
 function drawFooter(doc: JsPdfDoc, safe: Rect, brandName: string, website: string) {
@@ -169,7 +201,7 @@ function validateLayout(
 }
 
 function planGallery(rect: Rect, images: GalleryItem[]): { placed: Array<GalleryItem & { rect: Rect }>; remaining: GalleryItem[] } {
-  const tileH = sp(6);
+  const tileH = sp(5.5);
   const capH = sp(1.6);
   const rowH = tileH + capH + sp(1);
   const cols = 3;
@@ -218,15 +250,15 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
     .filter((x): x is GalleryItem => Boolean(x.src))
     .map((x) => ({ src: x.src!, caption: x.caption || "" }));
 
-  // PAGE 1 HERO
+  // PAGE 1 HERO (HTML parity)
   drawBranding(doc, brand, brochure.logoUrl, safe, 1);
   await renderLogoIfAvailable(doc, brochure.logoUrl, safe);
-  doc.setFillColor(...BLACK);
-  doc.rect(0, safe.y + sp(2), doc.internal.pageSize.getWidth(), safe.h - sp(2), "F");
+  doc.setFillColor(...SOFT_PAPER);
+  doc.rect(0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight(), "F");
 
-  const titleRect = clampRect(grid.colRect(1, 6, safe.y + sp(3), sp(9)), safe);
-  const priceRect = clampRect(grid.colRect(1, 4, safe.y + safe.h - sp(6), sp(4)), safe);
-  const heroRect = clampRect(grid.colRect(4, 9, safe.y + sp(6), safe.h - sp(10)), safe);
+  const titleRect = clampRect(grid.colRect(1, 6, safe.y + sp(2.2), sp(11)), safe);
+  const priceRect = clampRect(grid.colRect(1, 4, safe.y + safe.h - sp(5.3), sp(4)), safe);
+  const heroRect = clampRect(grid.colRect(1, 12, safe.y + sp(13), safe.h - sp(20)), safe);
   const layoutBoxes = [
     { name: "p1.title", rect: titleRect },
     { name: "p1.price", rect: priceRect },
@@ -237,90 +269,121 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
     ["p1.price", "p1.hero"],
   ]);
 
-  doc.setTextColor(...WHITE);
+  doc.setTextColor(...MUTED);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(9.5);
   doc.text((brochure.coverTagline || "CLEAN ENERGY COMMUTING").toUpperCase(), titleRect.x, titleRect.y + sp(1.4));
   doc.setTextColor(...ORANGE);
-  doc.setFontSize(42);
-  doc.text((product.name || "MODEL").toUpperCase(), titleRect.x, titleRect.y + sp(5.2));
+  doc.setFontSize(44);
+  const modelParts = (product.name || "MODEL").toUpperCase().split(" ");
+  if (modelParts.length > 1) {
+    doc.setTextColor(...BLACK);
+    doc.text(modelParts.slice(0, -1).join(" "), titleRect.x, titleRect.y + sp(5.2));
+    doc.setTextColor(...ORANGE);
+    doc.text(modelParts[modelParts.length - 1], titleRect.x, titleRect.y + sp(8.2));
+  } else {
+    doc.setTextColor(...BLACK);
+    doc.text(modelParts[0], titleRect.x, titleRect.y + sp(6.2));
+  }
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(215, 215, 215);
+  doc.setTextColor(...MUTED);
   doc.setFontSize(11);
-  const tagline = wrapLines(doc, product.tagline || "Built for the City. Smart. Clean. Electric.", titleRect.w, 2);
-  doc.text(tagline, titleRect.x, titleRect.y + sp(7.2));
+  const tagline = wrapLines(doc, product.tagline || "Built for the City. Smart. Clean. Electric.", titleRect.w * 0.9, 2);
+  doc.text(tagline, titleRect.x, titleRect.y + sp(10.4));
 
-  doc.setDrawColor(...ORANGE);
-  doc.roundedRect(titleRect.x, titleRect.y + sp(8.6), 28, 8, 4, 4, "S");
-  doc.setTextColor(...ORANGE);
+  doc.setFillColor(...PANEL);
+  doc.roundedRect(titleRect.x, titleRect.y + sp(12.8), 36, 8, 4, 4, "F");
+  doc.setTextColor(...WHITE);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text(`${speed} EV`, titleRect.x + 18, titleRect.y + sp(15.2), { align: "center" });
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text(speed, titleRect.x + 14, titleRect.y + sp(10), { align: "center" });
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(...ORANGE);
-  doc.text(price, priceRect.x, priceRect.y + sp(2.5));
+  doc.setTextColor(...MUTED);
+  doc.text("ON-ROAD PRICE", priceRect.x, priceRect.y + sp(0.9));
+  doc.setFontSize(24);
+  doc.setTextColor(185, 53, 10);
+  doc.text(price, priceRect.x, priceRect.y + sp(3.6));
 
   if (coverImage) {
-    doc.setFillColor(0, 0, 0);
-    doc.roundedRect(heroRect.x + 1, heroRect.y + 1, heroRect.w, heroRect.h, 6, 6, "F");
-    await drawContainImage(doc, coverImage, heroRect, false);
+    doc.setFillColor(...PANEL);
+    doc.roundedRect(heroRect.x, heroRect.y, heroRect.w, heroRect.h, 6, 6, "F");
+    await drawContainImage(doc, coverImage, {
+      x: heroRect.x + 1,
+      y: heroRect.y + 1,
+      w: heroRect.w - 2,
+      h: heroRect.h - 2,
+    }, true);
   }
   drawFooter(doc, safe, brand, brochure.website);
 
-  // PAGE 2 STORY + GALLERY
+  // PAGE 2 STORY + HIGHLIGHTS
   doc.addPage();
   const safe2 = safeArea(doc);
   drawBranding(doc, brand, brochure.logoUrl, safe2, 2);
   await renderLogoIfAvailable(doc, brochure.logoUrl, safe2);
-  const storyRect = grid.colRect(1, 5, safe2.y + sp(2), safe2.h - sp(6));
-  const imageRect = grid.colRect(6, 7, safe2.y + sp(2), sp(18));
-  const galleryRect = grid.colRect(6, 7, safe2.y + sp(21), safe2.h - sp(25));
+  const storyRect = grid.colRect(1, 7, safe2.y + sp(3.6), sp(13));
+  const imageRect = grid.colRect(8, 5, safe2.y + sp(3.6), sp(13));
+  const highlightsRect = grid.colRect(1, 12, safe2.y + sp(17.8), sp(9.4));
+  const galleryRect = grid.colRect(1, 12, safe2.y + sp(27.4), safe2.h - sp(29.2));
   validateLayout(safe2, [
     { name: "p2.story", rect: storyRect },
     { name: "p2.image", rect: imageRect },
+    { name: "p2.highlights", rect: highlightsRect },
     { name: "p2.gallery", rect: galleryRect },
   ]);
 
   doc.setTextColor(...BLACK);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(30);
+  doc.setFontSize(32);
   doc.text((product.name || "MODEL").toUpperCase(), storyRect.x, storyRect.y + sp(2.4));
-  doc.setFontSize(11);
+  doc.setFontSize(10.5);
   doc.setTextColor(...MUTED);
   doc.setFont("helvetica", "normal");
   const story = wrapLines(
     doc,
     brochure.shortDescription || product.description || `${product.name} is built for clean urban mobility.`,
     storyRect.w,
-    8
+    7
   );
   doc.text(story, storyRect.x, storyRect.y + sp(5));
 
-  let bulletY = storyRect.y + sp(12);
-  (brochure.highlightFeatures.slice(0, 3).length ? brochure.highlightFeatures.slice(0, 3) : ["Quick Charge", "LED Headlamp", "Hydraulic Suspension"]).forEach((h) => {
-    doc.setFillColor(...ORANGE);
-    doc.circle(storyRect.x + 1.8, bulletY - 1.2, 1.2, "F");
-    doc.setTextColor(...BLACK);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text(h, storyRect.x + 5, bulletY);
-    bulletY += sp(2.1);
-  });
-
   if (coverImage) {
-    doc.setFillColor(...WHITE);
+    doc.setFillColor(...PANEL);
     doc.roundedRect(imageRect.x, imageRect.y, imageRect.w, imageRect.h, 6, 6, "F");
-    doc.setDrawColor(...LINE);
-    doc.roundedRect(imageRect.x, imageRect.y, imageRect.w, imageRect.h, 6, 6, "S");
     await drawContainImage(doc, coverImage, {
       x: imageRect.x + 2,
       y: imageRect.y + 2,
       w: imageRect.w - 4,
       h: imageRect.h - 4,
-    });
+    }, true);
   }
+
+  // 3 premium highlight cards
+  const highlightItems = brochure.highlightFeatures.length
+    ? brochure.highlightFeatures.slice(0, 3)
+    : ["Efficient Batteries", "Quick Charge", "Hydraulic Suspension"];
+  const hw = (highlightsRect.w - GUTTER_MM * 2) / 3;
+  highlightItems.forEach((h, idx) => {
+    const hx = highlightsRect.x + idx * (hw + GUTTER_MM);
+    const hy = highlightsRect.y;
+    doc.setFillColor(...WHITE);
+    doc.roundedRect(hx, hy, hw, highlightsRect.h, 3, 3, "F");
+    doc.setDrawColor(...LINE);
+    doc.roundedRect(hx, hy, hw, highlightsRect.h, 3, 3, "S");
+    doc.setDrawColor(...ORANGE);
+    doc.setLineWidth(0.7);
+    doc.circle(hx + sp(2.2), hy + sp(2.1), sp(1.05), "S");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...BLACK);
+    doc.text(clampOneLineWithEllipsis(doc, h, hw - sp(4)), hx + sp(0.9), hy + sp(4.4));
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text("Premium feature detail", hx + sp(0.9), hy + sp(6.2));
+  });
 
   const g1 = planGallery(galleryRect, gallerySources);
   for (const tile of g1.placed) {
@@ -338,7 +401,7 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
       doc.setTextColor(...MUTED);
-      const cap = wrapLines(doc, tile.caption, tile.rect.w - 2, 1);
+      const cap = clampOneLineWithEllipsis(doc, tile.caption, tile.rect.w - 2);
       doc.text(cap, tile.rect.x + tile.rect.w / 2, tile.rect.y + tile.rect.h + sp(1.3), { align: "center" });
     }
   }
@@ -383,21 +446,29 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
     pageNo += 1;
   }
 
-  // SPEC PAGE
+  // SPEC PAGE (table-style parity)
   doc.addPage();
   const s3 = safeArea(doc);
   drawBranding(doc, brand, brochure.logoUrl, s3, pageNo);
   await renderLogoIfAvailable(doc, brochure.logoUrl, s3);
-  const cardA = grid.colRect(1, 6, s3.y + sp(2.2), sp(11));
-  const cardB = grid.colRect(7, 6, s3.y + sp(2.2), sp(11));
-  const cardC = grid.colRect(1, 6, s3.y + sp(14), sp(12));
-  const cardD = grid.colRect(7, 6, s3.y + sp(14), sp(12));
+  const titleRect3 = grid.colRect(1, 12, s3.y + sp(2), sp(3));
+  const cardA = grid.colRect(1, 6, s3.y + sp(6), sp(10.6));
+  const cardB = grid.colRect(7, 6, s3.y + sp(6), sp(10.6));
+  const cardC = grid.colRect(1, 6, s3.y + sp(17.3), sp(10.6));
+  const cardD = grid.colRect(7, 6, s3.y + sp(17.3), sp(10.6));
+  const iconRowRect = grid.colRect(1, 12, s3.y + sp(28.6), s3.h - sp(30.2));
   validateLayout(s3, [
+    { name: "p3.title", rect: titleRect3 },
     { name: "p3.cardA", rect: cardA },
     { name: "p3.cardB", rect: cardB },
     { name: "p3.cardC", rect: cardC },
     { name: "p3.cardD", rect: cardD },
+    { name: "p3.iconRow", rect: iconRowRect },
   ]);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(30);
+  doc.setTextColor(...BLACK);
+  doc.text("SPECIFICATION", titleRect3.x, titleRect3.y + sp(2.5));
 
   const renderCard = (rect: Rect, title: string, rows: Array<{ label: string; value: string }>) => {
     doc.setFillColor(...WHITE);
@@ -405,24 +476,26 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
     doc.setDrawColor(...LINE);
     doc.roundedRect(rect.x, rect.y, rect.w, rect.h, 4, 4, "S");
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...BLACK);
-    doc.setFontSize(11);
+    doc.setTextColor(185, 53, 10);
+    doc.setFontSize(8.5);
     doc.text(title.toUpperCase(), rect.x + sp(1), rect.y + sp(1.7));
-    doc.setDrawColor(...ORANGE);
-    doc.line(rect.x + sp(1), rect.y + sp(2.1), rect.x + sp(5.8), rect.y + sp(2.1));
+    doc.setDrawColor(...LINE);
+    doc.line(rect.x, rect.y + sp(2.6), rect.x + rect.w, rect.y + sp(2.6));
     let y = rect.y + sp(3.8);
     rows.forEach((r) => {
       if (!r.value.trim() || y > rect.y + rect.h - sp(2.2)) return;
-      doc.setFont("helvetica", "bold");
+      doc.setFont("helvetica", "normal");
       doc.setTextColor(...MUTED);
       doc.setFontSize(8.5);
       doc.text(r.label, rect.x + sp(1), y);
-      doc.setFont("helvetica", "normal");
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(...BLACK);
       doc.setFontSize(9.5);
-      const lines = wrapLines(doc, r.value, rect.w - sp(2), 2);
-      doc.text(lines, rect.x + sp(1), y + sp(1.4));
-      y += sp(3.4) + Math.max(0, lines.length - 1) * sp(1.2);
+      const one = clampOneLineWithEllipsis(doc, r.value, rect.w * 0.5);
+      doc.text(one, rect.x + rect.w - sp(1), y, { align: "right" });
+      doc.setDrawColor(...LINE);
+      doc.line(rect.x, y + sp(0.9), rect.x + rect.w, y + sp(0.9));
+      y += sp(3.4);
     });
   };
 
@@ -451,9 +524,11 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
   doc.setDrawColor(...LINE);
   doc.roundedRect(cardD.x, cardD.y, cardD.w, cardD.h, 4, 4, "S");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...BLACK);
+  doc.setFontSize(8.5);
+  doc.setTextColor(185, 53, 10);
   doc.text("SAFETY & FEATURES", cardD.x + sp(1), cardD.y + sp(1.7));
+  doc.setDrawColor(...LINE);
+  doc.line(cardD.x, cardD.y + sp(2.6), cardD.x + cardD.w, cardD.y + sp(2.6));
   let fY = cardD.y + sp(3.6);
   KEY_FEATURE_LABELS.forEach(({ key, label }) => {
     if (fY > cardD.y + cardD.h - sp(2)) return;
@@ -470,20 +545,40 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.text(enabled ? "YES" : "NO", cardD.x + cardD.w - sp(1.9), fY - 0.2, { align: "center" });
+    doc.setDrawColor(...LINE);
+    doc.line(cardD.x, fY + sp(0.9), cardD.x + cardD.w, fY + sp(0.9));
     fY += sp(2.2);
+  });
+
+  // Icon row
+  const iconItems = brochure.highlightFeatures.length
+    ? brochure.highlightFeatures.slice(0, 4)
+    : ["Efficient Batteries", "Disc / Drum Brake", "Quick Charge", "Tubeless Tyre"];
+  const iconW = (iconRowRect.w - GUTTER_MM * 3) / 4;
+  iconItems.forEach((item, idx) => {
+    const ix = iconRowRect.x + idx * (iconW + GUTTER_MM);
+    const iy = iconRowRect.y;
+    doc.setDrawColor(...ORANGE);
+    doc.setLineWidth(0.8);
+    doc.circle(ix + iconW / 2, iy + sp(2.2), sp(1.2), "S");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.2);
+    doc.setTextColor(...BLACK);
+    const two = wrapLines(doc, item, iconW - sp(1), 2);
+    doc.text(two, ix + iconW / 2, iy + sp(4.5), { align: "center" });
   });
   drawFooter(doc, s3, brand, brochure.website);
   pageNo += 1;
 
-  // FINAL PAGE
+  // FINAL PAGE (About + contact + CTA + QR)
   doc.addPage();
   const s4 = safeArea(doc);
   drawBranding(doc, brand, brochure.logoUrl, s4, pageNo);
   await renderLogoIfAvailable(doc, brochure.logoUrl, s4);
-  const aboutRect = grid.colRect(1, 7, s4.y + sp(2.2), sp(15));
-  const infoRect = grid.colRect(1, 7, s4.y + sp(18), sp(10));
-  const productRect = grid.colRect(8, 5, s4.y + sp(2.2), sp(18));
-  const socialRect = grid.colRect(8, 5, s4.y + sp(21), sp(7));
+  const aboutRect = grid.colRect(1, 7, s4.y + sp(3), sp(11.5));
+  const infoRect = grid.colRect(1, 7, s4.y + sp(15.2), sp(10.8));
+  const productRect = grid.colRect(8, 5, s4.y + sp(15.2), sp(10.8));
+  const socialRect = grid.colRect(1, 12, s4.y + sp(26.8), s4.h - sp(28.4));
   validateLayout(s4, [
     { name: "p4.about", rect: aboutRect },
     { name: "p4.info", rect: infoRect },
@@ -492,7 +587,7 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
   ]);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(30);
   doc.setTextColor(...ORANGE);
   doc.text(`ABOUT ${brand.toUpperCase()}`, aboutRect.x, aboutRect.y + sp(2.1));
   doc.setFont("helvetica", "normal");
@@ -551,7 +646,7 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(...BLACK);
-  doc.text("Social / QR", socialRect.x + sp(1), socialRect.y + sp(1.8));
+  doc.text("SCAN QR", socialRect.x + sp(1), socialRect.y + sp(1.8));
 
   if (brochure.qrCodeUrl) {
     const qr = await getBase64Image(brochure.qrCodeUrl);
@@ -568,8 +663,13 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...MUTED);
-  const socials = brochure.socialLinks.length ? brochure.socialLinks.join("  •  ") : "instagram / facebook / youtube";
-  doc.text(wrapLines(doc, socials, socialRect.w - sp(6), 3), socialRect.x + sp(1), socialRect.y + sp(3.6));
+  const socials = brochure.socialLinks.length ? brochure.socialLinks.join("  •  ") : "Instagram · Facebook · YouTube";
+  doc.text(wrapLines(doc, socials, socialRect.w - sp(9), 2), socialRect.x + sp(1), socialRect.y + sp(3.8));
+  doc.text(
+    wrapLines(doc, "Scan to explore the full range, book a test ride, and find your nearest dealer.", socialRect.w - sp(9), 2),
+    socialRect.x + sp(1),
+    socialRect.y + sp(6.4)
+  );
 
   drawFooter(doc, s4, brand, brochure.website);
 }
