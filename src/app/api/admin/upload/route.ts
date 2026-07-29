@@ -25,30 +25,44 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
+    const filesField = formData.getAll("files");
     const file = formData.get("file");
     const folder = formData.get("folder");
+    const files = filesField.filter((item): item is File => item instanceof File);
 
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No image file provided" }, { status: 400 });
+    if (files.length === 0 && file instanceof File) {
+      files.push(file);
     }
 
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json(
-        { error: "Only JPEG, PNG, WebP, and GIF images are allowed" },
-        { status: 400 }
-      );
+    if (files.length === 0) {
+      return NextResponse.json({ error: "No image files provided" }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "Image must be 5 MB or smaller" }, { status: 400 });
+    for (const item of files) {
+      if (!ALLOWED_TYPES.has(item.type)) {
+        return NextResponse.json(
+          { error: `Unsupported format for "${item.name}". Only JPEG, PNG, WebP, and GIF are allowed` },
+          { status: 400 }
+        );
+      }
+
+      if (item.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `Image "${item.name}" must be 5 MB or smaller` },
+          { status: 400 }
+        );
+      }
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const url = await uploadImage(buffer, {
-      folder: typeof folder === "string" && folder.trim() ? folder.trim() : "tiger-rydo",
-    });
+    const targetFolder = typeof folder === "string" && folder.trim() ? folder.trim() : "tiger-rydo";
+    const urls = await Promise.all(
+      files.map(async (item) => {
+        const buffer = Buffer.from(await item.arrayBuffer());
+        return uploadImage(buffer, { folder: targetFolder });
+      })
+    );
 
-    return NextResponse.json({ success: true, url });
+    return NextResponse.json({ success: true, url: urls[0], urls });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Upload failed";
     return NextResponse.json({ error: message }, { status: 500 });

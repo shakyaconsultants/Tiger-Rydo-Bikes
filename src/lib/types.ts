@@ -85,12 +85,48 @@ export interface SiteSettings {
   hiddenProductSlugs?: string[];
 }
 
+export interface BrochureKeyFeatures {
+  antiTheftAlarm: boolean;
+  centralLocking: boolean;
+  parkingSwitch: boolean;
+  reverseGear: boolean;
+  usbCharger: boolean;
+}
+
+export interface ProductBrochure {
+  enabled: boolean;
+  coverTagline: string;
+  speedCategory: "slow_speed" | "medium_speed" | "high_speed";
+  shortDescription: string;
+  colors: string[];
+  galleryImageUrls: string[];
+  motor: string;
+  speed: string;
+  chassis: string;
+  suspension: string;
+  otherFeature: string;
+  keyFeatures: BrochureKeyFeatures;
+  brakeSystem: string;
+  tyre: string;
+  tyreSizeFront: string;
+  tyreSizeRear: string;
+  weight: string;
+  speedometer: string;
+  battery: string;
+  charger: string;
+  chargingTimeLithium: string;
+  chargingTimeLeadAcid: string;
+  headLight: string;
+  highlightFeatures: string[];
+}
+
 export interface ListedProduct {
   _id?: string;
   name: string;
   price: number;
   imageUrl: string;
   isActive: boolean;
+  brochure?: ProductBrochure;
   createdAt?: string;
   updatedAt?: string;
 }

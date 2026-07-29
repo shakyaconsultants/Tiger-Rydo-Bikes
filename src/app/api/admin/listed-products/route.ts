@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import { ListedProduct } from "@/models/ListedProduct";
 import { requireSession } from "@/lib/api-auth";
 import { getListedProducts } from "@/lib/listed-products";
+import { normalizeBrochure } from "@/lib/brochure";
 
 export async function GET() {
   const session = await requireSession(["admin"]);
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { name, price, imageUrl, isActive } = body;
+    const { name, price, imageUrl, isActive, brochure } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
       trackInventory: true,
       stockQuantity: 0,
       lowStockThreshold: 5,
+      brochure: normalizeBrochure(brochure),
     });
 
     const doc = product.toObject();
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
       product: {
         ...doc,
         _id: String(doc._id),
+        brochure: normalizeBrochure(doc.brochure),
         createdAt: doc.createdAt?.toISOString(),
         updatedAt: doc.updatedAt?.toISOString(),
       },

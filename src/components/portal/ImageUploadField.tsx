@@ -7,8 +7,10 @@ interface ImageUploadFieldProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
+  onBatchUpload?: (urls: string[]) => void;
   folder?: string;
   hint?: string;
+  multiple?: boolean;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -23,30 +25,35 @@ export default function ImageUploadField({
   label,
   value,
   onChange,
+  onBatchUpload,
   folder = "tiger-rydo",
   hint,
+  multiple = false,
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleFileSelect(file: File | null) {
-    if (!file) return;
+  async function handleFileSelect(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
 
-    if (!ACCEPTED_MIME_TYPES.has(file.type)) {
-      setError("Only JPEG, PNG, WebP, and GIF images are allowed");
-      if (inputRef.current) {
-        inputRef.current.value = "";
+    for (const file of files) {
+      if (!ACCEPTED_MIME_TYPES.has(file.type)) {
+        setError(`Unsupported format for "${file.name}". Use JPEG, PNG, WebP, or GIF`);
+        if (inputRef.current) {
+          inputRef.current.value = "";
+        }
+        return;
       }
-      return;
-    }
 
-    if (file.size > MAX_FILE_SIZE) {
-      setError("Image must be 5 MB or smaller");
-      if (inputRef.current) {
-        inputRef.current.value = "";
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`Image "${file.name}" must be 5 MB or smaller`);
+        if (inputRef.current) {
+          inputRef.current.value = "";
+        }
+        return;
       }
-      return;
     }
 
     setError("");
@@ -54,24 +61,43 @@ export default function ImageUploadField({
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      files.forEach((file) => {
+        formData.append("files", file);
+      });
+      // Keep this for backward compatibility with existing server expectations.
+      formData.append("file", files[0]);
       formData.append("folder", folder);
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        url?: string;
+        urls?: string[];
+      };
 
       if (!res.ok) {
         throw new Error(data.error || "Upload failed");
       }
 
-      if (!data.url) {
+      const uploadedUrls =
+        Array.isArray(data.urls) && data.urls.length > 0
+          ? data.urls
+          : data.url
+            ? [data.url]
+            : [];
+
+      if (uploadedUrls.length === 0) {
         throw new Error("Upload failed: missing image URL");
       }
 
-      onChange(data.url);
+      if (onBatchUpload) {
+        onBatchUpload(uploadedUrls);
+      }
+
+      onChange(uploadedUrls[0]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -103,8 +129,9 @@ export default function ImageUploadField({
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
+          multiple={multiple}
           className="hidden"
-          onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
+          onChange={(e) => handleFileSelect(e.target.files)}
         />
         <button
           type="button"
@@ -112,7 +139,13 @@ export default function ImageUploadField({
           disabled={uploading}
           className="rounded-lg border border-[#E6E6E6] bg-white px-4 py-2.5 text-sm font-semibold text-[#111] transition hover:border-[#FF5A00]/40 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {uploading ? "Uploading..." : value ? "Replace image" : "Upload image"}
+          {uploading
+            ? "Uploading..."
+            : multiple
+              ? "Upload images"
+              : value
+                ? "Replace image"
+                : "Upload image"}
         </button>
         {value && (
           <button
