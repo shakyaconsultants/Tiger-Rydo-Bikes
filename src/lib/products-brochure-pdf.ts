@@ -118,7 +118,7 @@ function drawFooter(doc: JsPdfDoc, s: Rect, brand: string, website: string) {
   doc.setFontSize(7);
   doc.setTextColor(...TEXT_SECONDARY);
   doc.text(brand, s.x, ty);
-  doc.text(website || "www.tigerrydo.com", s.x + s.w, ty, { align: "right" });
+  doc.text(website || "tigerebikes.com", s.x + s.w, ty, { align: "right" });
   doc.text(`(c) ${new Date().getFullYear()} ${brand}`, s.x + s.w / 2, ty, { align: "center" });
 }
 
@@ -157,15 +157,15 @@ async function renderCover(doc: JsPdfDoc, product: Product, brochure: ReturnType
   doc.setTextColor(...TEXT_SECONDARY);
   doc.text((brochure.coverTagline || "Clean Energy Commuting").toUpperCase(), s.x, y);
 
-  // Model name
-  y += g(4);
+  // Model name — extra gap to avoid overlap with eyebrow
+  y += g(6);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(48);
   doc.setTextColor(...TEXT_PRIMARY);
   doc.text((product.name || "MODEL").toUpperCase(), s.x, y);
 
-  // Sub-tagline
-  y += g(3);
+  // Sub-tagline — extra gap below large model name
+  y += g(4.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.setTextColor(...TEXT_SECONDARY);
@@ -174,9 +174,9 @@ async function renderCover(doc: JsPdfDoc, product: Product, brochure: ReturnType
   // Hero scooter — floating, centered, ~70% page
   if (coverImage) {
     const heroW = s.w * 0.82;
-    const heroH = s.h - g(30);
+    const heroH = s.h - g(34);
     const heroX = s.x + (s.w - heroW) / 2;
-    const heroY = s.y + g(20);
+    const heroY = s.y + g(24);
 
     drawSoftShadow(doc, heroX + heroW / 2, heroY + heroH + g(0.5), heroW);
     await drawImg(doc, coverImage, { x: heroX, y: heroY, w: heroW, h: heroH });
@@ -547,10 +547,10 @@ async function renderCompany(
   const cardPad = g(3);
   let cy = y + g(3);
   const contactItems = [
-    { label: "Website", value: brochure.website || "www.tigerrydo.com" },
-    { label: "Email", value: brochure.email || "-" },
-    { label: "Phone", value: brochure.phone || "-" },
-    { label: "Address", value: brochure.address || "-" },
+    { label: "Website", value: brochure.website || "tigerebikes.com" },
+    { label: "Email", value: brochure.email || "info@tigerebikes.com" },
+    { label: "Phone", value: brochure.phone || "+91 9125158769" },
+    { label: "Address", value: brochure.address || "33, Hamirpur Rd, Keshav Nagar, Saket Nagar, Kanpur, UP 208014" },
   ];
 
   contactItems.forEach((item) => {
@@ -573,21 +573,14 @@ async function renderCompany(
   const qrX = s.x + s.w - cardPad - qrSize;
   const qrY = y + g(2.5);
 
-  if (brochure.qrCodeUrl) {
-    const qr = await fetchImage(brochure.qrCodeUrl);
-    if (qr) {
-      doc.setDrawColor(60, 60, 60);
-      doc.setLineWidth(DIVIDER_WEIGHT);
-      doc.roundedRect(qrX - qrPad, qrY - qrPad, qrSize + qrPad * 2, qrSize + qrPad * 2, 2, 2, "S");
-      await drawImg(doc, qr, { x: qrX, y: qrY, w: qrSize, h: qrSize });
-    }
-  } else {
-    doc.setDrawColor(60, 60, 60);
-    doc.setLineWidth(DIVIDER_WEIGHT);
-    doc.roundedRect(qrX - qrPad, qrY - qrPad, qrSize + qrPad * 2, qrSize + qrPad * 2, 2, 2, "S");
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text("QR", qrX + qrSize / 2, qrY + qrSize / 2, { align: "center" });
+  const qrUrl = brochure.qrCodeUrl
+    || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(brochure.website || "https://tigerebikes.com")}`;
+  const qrImg = await fetchImage(qrUrl);
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(DIVIDER_WEIGHT);
+  doc.roundedRect(qrX - qrPad, qrY - qrPad, qrSize + qrPad * 2, qrSize + qrPad * 2, 2, 2, "S");
+  if (qrImg) {
+    await drawImg(doc, qrImg, { x: qrX, y: qrY, w: qrSize, h: qrSize });
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
@@ -631,7 +624,7 @@ async function renderCompany(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(...TEXT_SECONDARY);
-  doc.text("Powering clean mobility since 2020", s.x, prodY + g(7));
+  doc.text("Powering clean mobility since 2024", s.x, prodY + g(7));
 
   drawFooter(doc, s, brand, brochure.website || "");
 }
