@@ -1,18 +1,14 @@
 import { connectDB } from "@/lib/mongodb";
 import { ListedProduct, type IListedProduct } from "@/models/ListedProduct";
 import type { ListedProduct as ListedProductType } from "@/lib/types";
-import { normalizeBrochure } from "@/lib/brochure";
 
-function toListedProduct(
-  doc: IListedProduct & { _id: unknown; createdAt?: Date; updatedAt?: Date }
-): ListedProductType {
+function toListedProduct(doc: IListedProduct & { _id: unknown; createdAt?: Date; updatedAt?: Date }): ListedProductType {
   return {
     _id: String(doc._id),
     name: doc.name,
     price: doc.price,
     imageUrl: doc.imageUrl,
     isActive: doc.isActive,
-    brochure: normalizeBrochure(doc.brochure),
     createdAt: doc.createdAt?.toISOString(),
     updatedAt: doc.updatedAt?.toISOString(),
   };
@@ -36,9 +32,7 @@ export async function getListedProductById(id: string): Promise<ListedProductTyp
     await connectDB();
     const doc = await ListedProduct.findById(id).lean();
     if (!doc) return null;
-    return toListedProduct(
-      doc as unknown as IListedProduct & { _id: unknown; createdAt?: Date; updatedAt?: Date }
-    );
+    return toListedProduct(doc as unknown as IListedProduct & { _id: unknown; createdAt?: Date; updatedAt?: Date });
   } catch {
     return null;
   }

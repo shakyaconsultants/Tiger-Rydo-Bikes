@@ -7,10 +7,8 @@ import { Download } from "lucide-react";
 import Button from "@/components/ui/Button";
 import type { ListedProduct } from "@/lib/types";
 import { formatPrice } from "@/lib/product-utils";
-import { defaultBrochure, normalizeBrochure } from "@/lib/brochure";
 import { downloadListedProductsPdf } from "@/lib/listed-products-pdf";
 import ImageUploadField from "./ImageUploadField";
-import BrochureForm from "./BrochureForm";
 import {
   ActionBar,
   Empty,
@@ -26,14 +24,6 @@ function newListedProduct(): ListedProduct {
     price: 0,
     imageUrl: "",
     isActive: true,
-    brochure: defaultBrochure(),
-  };
-}
-
-function withBrochure(product: ListedProduct): ListedProduct {
-  return {
-    ...product,
-    brochure: normalizeBrochure(product.brochure),
   };
 }
 
@@ -41,32 +31,32 @@ interface Props {
   initialProducts: ListedProduct[];
   onMessage: (text: string) => void;
   message: string;
+
 }
 
 export default function ListedProductsPanel({ initialProducts, onMessage, message }: Props) {
   const router = useRouter();
   const [products, setProducts] = useState(
-    (initialProducts.length ? initialProducts : [newListedProduct()]).map(withBrochure)
+    initialProducts.length ? initialProducts : [newListedProduct()]
   );
   const [selected, setSelected] = useState(0);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+
   const product = products[selected];
   const savedProducts = products.filter((p) => p._id);
 
   useEffect(() => {
-    setProducts(
-      (initialProducts.length ? initialProducts : [newListedProduct()]).map(withBrochure)
-    );
+    setProducts(initialProducts.length ? initialProducts : [newListedProduct()]);
   }, [initialProducts]);
 
   async function refreshProducts(keepSelectedId?: string) {
     const res = await fetch("/api/admin/listed-products");
     const data = await res.json();
     if (res.ok && Array.isArray(data.products)) {
-      const next = (data.products as ListedProduct[]).map(withBrochure);
+      const next = data.products as ListedProduct[];
       setProducts(next.length ? next : [newListedProduct()]);
       if (keepSelectedId) {
         const idx = next.findIndex((p) => p._id === keepSelectedId);
@@ -78,7 +68,7 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
 
   function updateProduct(patch: Partial<ListedProduct>) {
     setProducts((prev) =>
-      prev.map((p, i) => (i === selected ? withBrochure({ ...p, ...patch }) : p))
+      prev.map((p, i) => (i === selected ? { ...p, ...patch } : p))
     );
   }
 
@@ -115,7 +105,7 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
     }
 
     setProducts((prev) =>
-      prev.map((p, i) => (i === selected ? withBrochure(data.product) : p))
+      prev.map((p, i) => (i === selected ? data.product : p))
     );
     onMessage(isNew ? "Product added!" : "Product updated!");
     await refreshProducts(data.product._id);
@@ -153,7 +143,7 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
     setPdfLoading(true);
     try {
       await downloadListedProductsPdf(savedProducts);
-      onMessage("Brochure PDF downloaded");
+      onMessage("PDF downloaded");
     } catch {
       onMessage("PDF download failed");
     } finally {
@@ -173,7 +163,7 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
   return (
     <Panel
       title="Dealer Products"
-      description="Manage catalog products and brochure details. Toggle brochure fields on, fill specs, then Download PDF to generate Royal-style brochures."
+      description="Products visible only to admin and dealers — not shown on the public website. Use the dropdown to switch products, then click Delete to remove one."
     >
       <ActionBar>
         <select
@@ -187,7 +177,6 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
           {products.map((p, i) => (
             <option key={p._id || `new-${i}`} value={i}>
               {p.name || `Product ${i + 1}`}
-              {p.brochure?.enabled ? " · Brochure" : ""}
             </option>
           ))}
         </select>
@@ -218,7 +207,7 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
           disabled={pdfLoading || savedProducts.length === 0}
         >
           <Download className="mr-2 h-4 w-4" />
-          {pdfLoading ? "Generating..." : "Download Brochure PDF"}
+          {pdfLoading ? "Generating..." : "Download PDF"}
         </Button>
       </ActionBar>
 
@@ -230,7 +219,8 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
 
       {product ? (
         <>
-          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {/* Row 1 */}
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Field
               label="Name"
               required
@@ -257,18 +247,23 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
             />
 
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-[#333]">Status</label>
+              <label className="mb-1.5 block text-sm font-semibold text-[#333]">
+                Status
+              </label>
+
               <label className="flex h-[42px] items-center gap-3 rounded-lg border border-[#E6E6E6] bg-white px-3">
                 <input
                   type="checkbox"
                   checked={product.isActive}
                   onChange={(e) => updateProduct({ isActive: e.target.checked })}
                 />
+
                 <div>
                   <p className="text-sm font-semibold text-[#111]">
                     {product.isActive ? "Active" : "Inactive"}
                   </p>
-                  <p className="text-[11px] leading-tight text-[#888]">
+
+                  <p className="text-[11px] text-[#888] leading-tight">
                     Hidden from dealers when inactive
                   </p>
                 </div>
@@ -276,12 +271,13 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Row 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ImageUploadField
               label="Product Image"
               value={product.imageUrl}
               folder="tiger-rydo/listed-products"
-              hint="Main cover image for catalog and brochure"
+              hint=""
               onChange={(v) => {
                 updateProduct({ imageUrl: v });
                 setErrors((e) => ({ ...e, imageUrl: undefined }));
@@ -299,24 +295,22 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
             />
           </div>
 
-          {errors.imageUrl && <p className="mt-2 text-xs text-red-500">{errors.imageUrl}</p>}
-
-          <BrochureForm
-            brochure={product.brochure || defaultBrochure()}
-            onChange={(brochure) => updateProduct({ brochure })}
-          />
+          {errors.imageUrl && (
+            <p className="mt-2 text-xs text-red-500">
+              {errors.imageUrl}
+            </p>
+          )}
         </>
       ) : (
         <Empty text="Add a dealer product to get started." />
       )}
 
       {savedProducts.length > 0 && (
-        <div className="mb-6 border-b border-[#E6E6E6] pb-6 pt-6">
+        <div className="mb-6 border-b border-[#E6E6E6] pb-6">
           <div className="mb-4">
             <p className="text-sm font-bold text-[#111]">Saved Products</p>
             <p className="text-xs text-[#888]">
-              {savedProducts.length} product{savedProducts.length !== 1 ? "s" : ""} · click a card
-              to edit
+              {savedProducts.length} product{savedProducts.length !== 1 ? "s" : ""} · click a card to edit
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -330,11 +324,10 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
                   onClick={() => {
                     if (index >= 0) setSelected(index);
                   }}
-                  className={`group overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md ${
-                    isSelected
-                      ? "border-[#FF5A00] ring-2 ring-[#FF5A00]/25"
-                      : "border-[#E6E6E6] hover:border-[#FF5A00]/50"
-                  }`}
+                  className={`group overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md ${isSelected
+                    ? "border-[#FF5A00] ring-2 ring-[#FF5A00]/25"
+                    : "border-[#E6E6E6] hover:border-[#FF5A00]/50"
+                    }`}
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#F4F4F5]">
                     {p.imageUrl ? (
@@ -350,19 +343,13 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
                         No image
                       </div>
                     )}
+
                   </div>
                   <div className="border-t border-[#F0F0F0] p-3">
                     <p className="line-clamp-2 text-sm font-semibold leading-snug text-[#111]">
                       {p.name}
                     </p>
-                    <p className="mt-1.5 text-sm font-bold text-[#FF5A00]">
-                      {formatPrice(p.price)}
-                    </p>
-                    {p.brochure?.enabled && (
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#888]">
-                        Brochure ready
-                      </p>
-                    )}
+                    <p className="mt-1.5 text-sm font-bold text-[#FF5A00]">{formatPrice(p.price)}</p>
                   </div>
                 </button>
               );
@@ -370,6 +357,8 @@ export default function ListedProductsPanel({ initialProducts, onMessage, messag
           </div>
         </div>
       )}
+
+
     </Panel>
   );
 }
