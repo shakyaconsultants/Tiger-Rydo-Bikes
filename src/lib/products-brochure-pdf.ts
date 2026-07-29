@@ -157,13 +157,23 @@ function drawFooter(doc: JsPdfDoc, safe: Rect, brandName: string, website: strin
   doc.text(website || "www.tigerrydo.com", safe.x + safe.w, y + 3.4, { align: "right" });
 }
 
-function validateLayout(safe: Rect, boxes: Array<{ name: string; rect: Rect }>) {
+function validateLayout(
+  safe: Rect,
+  boxes: Array<{ name: string; rect: Rect }>,
+  allowedOverlaps: Array<[string, string]> = []
+) {
+  const overlapSet = new Set(
+    allowedOverlaps.map(([a, b]) => [a, b].sort().join("::"))
+  );
   boxes.forEach((b) => assertInside(b.rect, safe, b.name));
   for (let i = 0; i < boxes.length; i += 1) {
     for (let j = i + 1; j < boxes.length; j += 1) {
       if (intersects(boxes[i].rect, boxes[j].rect)) {
-        // Allow natural overlaps for hero image layers only.
-        const allowed = boxes[i].name.includes("layer") || boxes[j].name.includes("layer");
+        const key = [boxes[i].name, boxes[j].name].sort().join("::");
+        const allowed =
+          overlapSet.has(key) ||
+          boxes[i].name.includes("layer") ||
+          boxes[j].name.includes("layer");
         if (!allowed) throw new Error(`Layout collision: ${boxes[i].name} vs ${boxes[j].name}`);
       }
     }
@@ -234,7 +244,7 @@ async function renderBrochurePageSet(doc: JsPdfDoc, product: Product) {
     { name: "p1.price", rect: priceRect },
     { name: "p1.hero", rect: heroRect },
   ];
-  validateLayout(safe, layoutBoxes);
+  validateLayout(safe, layoutBoxes, [["p1.title", "p1.hero"]]);
 
   doc.setTextColor(...WHITE);
   doc.setFont("helvetica", "bold");
