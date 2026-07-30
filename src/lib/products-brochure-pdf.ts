@@ -102,7 +102,7 @@ async function drawBranding(doc: JsPdfDoc, s: Rect) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...TEXT_PRIMARY);
-    doc.text("TIGER RYDO", s.x, s.y + g(1.5));
+    doc.text("TIGER EBIKES", s.x, s.y + g(1.5));
   }
 }
 
@@ -144,7 +144,7 @@ function fillPage(doc: JsPdfDoc) {
 // ═══════════════════════════════════════════════════════════════════════════
 async function renderCover(doc: JsPdfDoc, product: Product, brochure: ReturnType<typeof normalizeBrochure>, coverImage: string | null) {
   const s = safeArea(doc);
-  const brand = brochure.brandName || "Tiger Rydo";
+  const brand = brochure.brandName || "Tiger Ebikes";
   const price = formatPrice(getLowestPrice(product));
 
   fillPage(doc);
@@ -215,7 +215,7 @@ async function renderStory(
 ) {
   doc.addPage();
   const s = safeArea(doc);
-  const brand = brochure.brandName || "Tiger Rydo";
+  const brand = brochure.brandName || "Tiger Ebikes";
 
   fillPage(doc);
   await drawBranding(doc, s);
@@ -365,7 +365,7 @@ async function renderStory(
 async function renderSpecs(doc: JsPdfDoc, brochure: ReturnType<typeof normalizeBrochure>) {
   doc.addPage();
   const s = safeArea(doc);
-  const brand = brochure.brandName || "Tiger Rydo";
+  const brand = brochure.brandName || "Tiger Ebikes";
 
   fillPage(doc);
   await drawBranding(doc, s);
@@ -500,7 +500,7 @@ async function renderCompany(
 ) {
   doc.addPage();
   const s = safeArea(doc);
-  const brand = brochure.brandName || "Tiger Rydo";
+  const brand = brochure.brandName || "Tiger Ebikes";
   const price = formatPrice(getLowestPrice(product));
 
   fillPage(doc);
@@ -632,7 +632,7 @@ async function renderCompany(
 // ─── Gallery Continuation Pages ─────────────────────────────────────────────
 async function renderGalleryPages(doc: JsPdfDoc, gallery: GalleryItem[], brochure: ReturnType<typeof normalizeBrochure>) {
   if (gallery.length === 0) return;
-  const brand = brochure.brandName || "Tiger Rydo";
+  const brand = brochure.brandName || "Tiger Ebikes";
   let remaining = gallery;
 
   while (remaining.length > 0) {

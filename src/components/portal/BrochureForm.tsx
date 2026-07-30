@@ -157,7 +157,7 @@ export default function BrochureForm({ brochure, onChange }: Props) {
           <Field
             label="Brand name"
             value={brochure.brandName}
-            placeholder="Tiger Rydo"
+            placeholder="Tiger Ebikes"
             onChange={(brandName) => patch({ brandName })}
           />
           <Field
@@ -284,7 +284,7 @@ export default function BrochureForm({ brochure, onChange }: Props) {
             <input
               className={inputClass + " max-w-[360px]"}
               value={socialDraft}
-              placeholder="e.g. instagram.com/tigerrydo"
+              placeholder="e.g. instagram.com/tigerebikes"
               onChange={(e) => setSocialDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

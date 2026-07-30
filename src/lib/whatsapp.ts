@@ -5,7 +5,7 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
 }
 
 export function dealershipWhatsAppMessage(dealerName: string): string {
-  return `Hi ${dealerName}, I'm interested in becoming a Tiger Rydo dealer. Please share dealership details.`;
+  return `Hi ${dealerName}, I'm interested in becoming a Tiger Ebikes dealer. Please share dealership details.`;
 }
 
 export function productInquiryMessage(productName: string, variantName: string): string {

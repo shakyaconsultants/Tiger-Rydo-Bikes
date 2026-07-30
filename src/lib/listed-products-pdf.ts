@@ -37,7 +37,7 @@ export async function downloadListedProductsPdf(products: ListedProduct[]) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text("Tiger Rydo", 14, 14);
+  doc.text("Tiger Ebikes", 14, 14);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
@@ -183,7 +183,7 @@ export async function downloadListedProductsPdf(products: ListedProduct[]) {
       doc.setTextColor(120);
 
       doc.text(
-        "Tiger Rydo Dealer Portal",
+        "Tiger Ebikes Dealer Portal",
         14,
         pageHeight - 10
       );

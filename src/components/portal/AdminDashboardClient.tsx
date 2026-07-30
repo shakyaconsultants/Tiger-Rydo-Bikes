@@ -76,7 +76,7 @@ function withBrochure(product: Product): Product {
 function newDealer(): Dealer {
   return {
     name: "",
-    email: `dealer${Date.now()}@tigerrydo.com`,
+    email: `dealer${Date.now()}@tigerebikes.com`,
     phone: "+91",
     whatsapp: "91",
     address: "",

@@ -1,8 +1,8 @@
-# Tiger Rydo
+# Tiger Ebikes
 
 **Ride Bold. Ride Clean. Ride Future.**
 
-A premium electric scooter brand website built with Next.js, TypeScript, and MongoDB — following the Tiger Rydo brand guidelines v1.0.
+A premium electric scooter brand website built with Next.js, TypeScript, and MongoDB — following the Tiger Ebikes brand guidelines v1.0.
 
 ## Tech Stack
 
@@ -83,4 +83,4 @@ src/
 
 ## License
 
-Private — Tiger Rydo Brand Guidelines v1.0
+Private — Tiger Ebikes Brand Guidelines v1.0

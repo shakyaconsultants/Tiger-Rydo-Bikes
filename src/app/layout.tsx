@@ -22,11 +22,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: `${BRAND.fullName} — ${BRAND.tagline}`,
   description:
-    "Tiger Rydo is the electric scooter brand for modern city riders who want premium design, reliable performance, and a clean identity. Built for the city. Smart. Clean. Electric.",
+    "Tiger Ebikes is the electric scooter brand for modern city riders who want premium design, reliable performance, and a clean identity. Built for the city. Smart. Clean. Electric.",
   keywords: [
     "electric scooter",
     "e-scooter",
-    "Tiger Rydo",
+    "Tiger Ebikes",
     "urban mobility",
     "EV",
     "electric vehicle",

@@ -11,7 +11,7 @@ import AdminDashboardClient from "@/components/portal/AdminDashboardClient";
 import type { Dealer as DealerType, Inquiry as InquiryType } from "@/lib/types";
 
 export const metadata = {
-  title: "Admin Dashboard — Tiger Rydo",
+  title: "Admin Dashboard — Tiger Ebikes",
 };
 
 export default async function AdminDashboardPage() {

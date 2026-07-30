@@ -67,7 +67,7 @@ const BrochureSchema = new Schema(
   {
     enabled: { type: Boolean, default: false },
     coverTagline: { type: String, default: "CLEAN ENERGY COMMUTING" },
-    brandName: { type: String, default: "Tiger Rydo" },
+    brandName: { type: String, default: "Tiger Ebikes" },
     logoUrl: { type: String, default: "" },
     speedCategory: {
       type: String,

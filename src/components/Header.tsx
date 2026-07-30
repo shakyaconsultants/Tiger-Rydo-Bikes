@@ -13,7 +13,7 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#E6E6E6]">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-        <Link href="/" aria-label="Tiger Rydo Home">
+        <Link href="/" aria-label="Tiger Ebikes Home">
           <Logo />
         </Link>
 

@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Login — Tiger Rydo",
+  title: "Login — Tiger Ebikes",
 };
 
 export default function DealerLoginPage() {

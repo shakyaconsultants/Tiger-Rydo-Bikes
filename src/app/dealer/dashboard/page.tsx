@@ -6,7 +6,7 @@ import { getDealerOrders } from "@/lib/orders";
 import DealerDashboardClient from "@/components/portal/DealerDashboardClient";
 
 export const metadata = {
-  title: "Dealer Dashboard — Tiger Rydo",
+  title: "Dealer Dashboard — Tiger Ebikes",
 };
 
 export default async function DealerDashboardPage() {

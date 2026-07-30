@@ -61,7 +61,7 @@ export default async function Hero() {
 
           <Image
             src="/images/hero-bike.png"
-            alt="Tiger Rydo Scooter"
+            alt="Tiger Ebikes Scooter"
             width={820}
             height={820}
             priority

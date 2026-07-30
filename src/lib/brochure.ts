@@ -59,7 +59,7 @@ export function defaultBrochure(): ProductBrochure {
   return {
     enabled: false,
     coverTagline: "CLEAN ENERGY COMMUTING",
-    brandName: "Tiger Rydo",
+    brandName: "Tiger Ebikes",
     logoUrl: "",
     speedCategory: "slow_speed",
     shortDescription: "",
@@ -67,11 +67,11 @@ export function defaultBrochure(): ProductBrochure {
     galleryImages: [],
     mission: "Build clean, bold and reliable electric mobility for everyday riders.",
     companyDescription:
-      "Tiger Rydo designs premium electric two-wheelers for modern city mobility with a focus on comfort, safety, and sustainability.",
-    address: "",
-    phone: "",
-    email: "",
-    website: "www.tigerrydo.com",
+      "Tiger Ebikes designs premium electric two-wheelers for modern city mobility with a focus on comfort, safety, and sustainability.",
+    address: "33, Hamirpur Rd, Keshav Nagar, W Block, Juhi Kalan, Saket Nagar, Kanpur, Uttar Pradesh 208014",
+    phone: "+91 9125158769",
+    email: "info@tigerebikes.com",
+    website: "https://tigerebikes.com",
     qrCodeUrl: "",
     socialLinks: [],
     motor: "Highly Insulated BLDC Motor",
@@ -121,19 +121,37 @@ export function normalizeBrochure(input?: Partial<ProductBrochure> | null): Prod
         .filter((item) => item.url)
     : [];
 
+  const rawWebsite = String(input.website ?? base.website).trim();
+  const rawBrand = String(input.brandName ?? base.brandName).trim();
+  const rawCompany = String(input.companyDescription ?? base.companyDescription).trim();
+  const rawAddress = String(input.address ?? base.address).trim();
+  const rawPhone = String(input.phone ?? base.phone).trim();
+  const rawEmail = String(input.email ?? base.email).trim();
+
+  const website = /tigerrydo/i.test(rawWebsite) || !rawWebsite
+    ? base.website
+    : rawWebsite;
+  const brandName = /tiger\s*rydo/i.test(rawBrand) || !rawBrand
+    ? base.brandName
+    : rawBrand;
+  const companyDescription = /tiger\s*rydo/i.test(rawCompany)
+    ? base.companyDescription
+    : rawCompany;
+
   return {
     ...base,
     ...input,
+    brandName,
     colors: Array.isArray(input.colors)
       ? input.colors.map((c) => String(c).trim()).filter(Boolean)
       : base.colors,
     galleryImages: galleryFromNew.length > 0 ? galleryFromNew : galleryFromLegacy,
     mission: String(input.mission ?? base.mission).trim(),
-    companyDescription: String(input.companyDescription ?? base.companyDescription).trim(),
-    address: String(input.address ?? base.address).trim(),
-    phone: String(input.phone ?? base.phone).trim(),
-    email: String(input.email ?? base.email).trim(),
-    website: String(input.website ?? base.website).trim(),
+    companyDescription,
+    address: rawAddress || base.address,
+    phone: rawPhone || base.phone,
+    email: rawEmail || base.email,
+    website,
     qrCodeUrl: String(input.qrCodeUrl ?? base.qrCodeUrl).trim(),
     socialLinks: Array.isArray(input.socialLinks)
       ? input.socialLinks.map((s) => String(s).trim()).filter(Boolean)

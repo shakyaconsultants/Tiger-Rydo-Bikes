@@ -25,7 +25,7 @@ export default function Logo({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={className}
-        aria-label="Tiger Rydo"
+        aria-label="Tiger Ebikes"
       >
         <circle
           cx="28"
@@ -59,7 +59,7 @@ export default function Logo({
         src={variant === "reverse"
           ? "/images/tiger logo white.png"
           : "/images/tiger logo.png"}
-        alt="Tiger Rydo"
+        alt="Tiger Ebikes"
         width={220}
         height={70}
         priority

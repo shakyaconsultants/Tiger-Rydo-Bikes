@@ -8,8 +8,8 @@ import { dealershipWhatsAppMessage } from "@/lib/whatsapp";
 import { LogIn } from "lucide-react";
 
 export const metadata = {
-  title: "Dealers — Tiger Rydo",
-  description: "Find authorized Tiger Rydo dealers near you or apply for a dealership.",
+  title: "Dealers — Tiger Ebikes",
+  description: "Find authorized Tiger Ebikes dealers near you or apply for a dealership.",
 };
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export default async function DealersPage() {
               FIND A DEALER
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-[#7A7A7A]">
-              Visit an authorized Tiger Rydo dealer for test rides, service, and support.
+              Visit an authorized Tiger Ebikes dealer for test rides, service, and support.
               Contact them directly on WhatsApp.
             </p>
           </div>
@@ -45,7 +45,7 @@ export default async function DealersPage() {
             </Link>
             <WhatsAppButton
               phone={DEALERSHIP_WHATSAPP.phone}
-              message={dealershipWhatsAppMessage("Tiger Rydo Team")}
+              message={dealershipWhatsAppMessage("Tiger Ebikes Team")}
               label={DEALERSHIP_WHATSAPP.label}
             />
           </div>
@@ -62,12 +62,12 @@ export default async function DealersPage() {
             WANT TO BECOME A DEALER?
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-[#7A7A7A]">
-            Join the Tiger Rydo network. Reach out on WhatsApp to explore dealership opportunities.
+            Join the Tiger Ebikes network. Reach out on WhatsApp to explore dealership opportunities.
           </p>
           <div className="mt-8">
             <WhatsAppButton
               phone={DEALERSHIP_WHATSAPP.phone}
-              message={dealershipWhatsAppMessage("Tiger Rydo Team")}
+              message={dealershipWhatsAppMessage("Tiger Ebikes Team")}
               label="Contact on WhatsApp"
             />
           </div>

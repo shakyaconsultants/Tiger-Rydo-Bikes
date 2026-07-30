@@ -2,8 +2,8 @@ import { getCatalogProducts } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 
 export const metadata = {
-  title: "Products — Tiger Rydo",
-  description: "Explore Tiger Rydo electric scooters with multiple battery variants.",
+  title: "Products — Tiger Ebikes",
+  description: "Explore Tiger Ebikes electric scooters with multiple battery variants.",
 };
 
 export const dynamic = "force-dynamic";

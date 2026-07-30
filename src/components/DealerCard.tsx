@@ -35,7 +35,7 @@ export default function DealerCard({ dealer }: DealerCardProps) {
       <div className="mt-6">
         <WhatsAppButton
           phone={dealer.whatsapp}
-          message={productInquiryMessage("Tiger Rydo", "any model")}
+          message={productInquiryMessage("Tiger Ebikes", "any model")}
           label="Contact on WhatsApp"
           className="w-full justify-center"
         />

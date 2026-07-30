@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps) {
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Product Not Found" };
   return {
-    title: `${product.name} — Tiger Rydo`,
+    title: `${product.name} — Tiger Ebikes`,
     description: product.description,
   };
 }

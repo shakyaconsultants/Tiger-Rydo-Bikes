@@ -3,7 +3,7 @@ import type { Product, Dealer } from "./types";
 
 export const BRAND = {
   name: "TIGER",
-  fullName: "TIGER RYDO",
+  fullName: "TIGER EBIKES",
   tagline: "BUILT FOR THE CITY.",
   subTagline: "Smart. Clean. Electric.",
   logoTagline: "E-POWERED. FUTURE READY.",
@@ -231,8 +231,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
 export const FALLBACK_DEALERS: Dealer[] = [
   {
     _id: "dealer-1",
-    name: "Tiger Rydo — Mumbai Central",
-    email: "mumbai@tigerrydo.com",
+    name: "Tiger Ebikes — Mumbai Central",
+    email: "mumbai@tigerebikes.com",
     phone: "+91 98765 43210",
     whatsapp: "919876543210",
     address: "12, Linking Road, Bandra West",
@@ -243,8 +243,8 @@ export const FALLBACK_DEALERS: Dealer[] = [
   },
   {
     _id: "dealer-2",
-    name: "Tiger Rydo — Delhi South",
-    email: "delhi@tigerrydo.com",
+    name: "Tiger Ebikes — Delhi South",
+    email: "delhi@tigerebikes.com",
     phone: "+91 98765 43211",
     whatsapp: "919876543211",
     address: "45, Saket Main Road",
@@ -255,8 +255,8 @@ export const FALLBACK_DEALERS: Dealer[] = [
   },
   {
     _id: "dealer-3",
-    name: "Tiger Rydo — Bangalore",
-    email: "bangalore@tigerrydo.com",
+    name: "Tiger Ebikes — Bangalore",
+    email: "bangalore@tigerebikes.com",
     phone: "+91 98765 43212",
     whatsapp: "919876543212",
     address: "78, Indiranagar 100 Feet Road",
@@ -267,8 +267,8 @@ export const FALLBACK_DEALERS: Dealer[] = [
   },
   {
     _id: "dealer-4",
-    name: "Tiger Rydo — Pune",
-    email: "pune@tigerrydo.com",
+    name: "Tiger Ebikes — Pune",
+    email: "pune@tigerebikes.com",
     phone: "+91 98765 43213",
     whatsapp: "919876543213",
     address: "23, FC Road",
@@ -290,7 +290,7 @@ export const DEMO_ADMIN = {
   passwordHash: PORTAL_CREDENTIALS.passwordHash,
   session: {
     id: "portal-admin",
-    name: "Tiger Rydo Admin",
+    name: "Tiger Ebikes Admin",
     email: PORTAL_CREDENTIALS.email,
     city: "Head Office",
     role: "admin" as const,
@@ -302,7 +302,7 @@ export const DEMO_DEALER = {
   passwordHash: PORTAL_CREDENTIALS.passwordHash,
   session: {
     id: "portal-dealer",
-    name: "Tiger Rydo Dealer",
+    name: "Tiger Ebikes Dealer",
     email: PORTAL_CREDENTIALS.email,
     city: "Mumbai",
     role: "dealer" as const,
