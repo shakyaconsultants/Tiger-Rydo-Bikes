@@ -129,7 +129,21 @@ export interface ProductBrochure {
   chargingTimeLeadAcid: string;
   headLight: string;
   highlightFeatures: string[];
+  /** Fixed brochure icon categories with optional uploaded images */
+  specIconImages: BrochureSpecIconImages;
 }
+
+export type BrochureSpecIconKey =
+  | "alloyWheels"
+  | "discBrake"
+  | "largeBoot"
+  | "tubelessTyre"
+  | "usbChargingPort"
+  | "brightHeadlamp"
+  | "drlLights"
+  | "digitalMeter";
+
+export type BrochureSpecIconImages = Record<BrochureSpecIconKey, string>;
 
 export interface ListedProduct {
   _id?: string;

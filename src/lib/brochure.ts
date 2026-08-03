@@ -1,4 +1,4 @@
-import type { ProductBrochure } from "@/lib/types";
+import type { BrochureSpecIconImages, BrochureSpecIconKey, ProductBrochure } from "@/lib/types";
 
 export const SPEED_CATEGORY_OPTIONS = [
   { value: "slow_speed", label: "Slow Speed" },
@@ -37,15 +37,42 @@ export const TYRE_OPTIONS = [
 ] as const;
 
 export const DEFAULT_HIGHLIGHT_FEATURES = [
-  "Efficient Batteries",
-  "Quick Charge",
-  "Hydraulic Suspension",
-  "Digital Meter",
-  "Bright Headlamp",
-  "USB Charging Port",
-  "Disc/Drum Brake",
+  "Alloy Wheels",
+  "Disc Brake",
+  "Large Boot",
   "Tubeless Tyre",
+  "USB Charging Port",
+  "Bright Headlamp",
+  "DRL Lights",
+  "Digital Meter",
 ];
+
+export const SPEC_ICON_CATEGORIES: {
+  key: BrochureSpecIconKey;
+  label: string;
+}[] = [
+  { key: "alloyWheels", label: "Alloy Wheels" },
+  { key: "discBrake", label: "Disc Brake" },
+  { key: "largeBoot", label: "Large Boot" },
+  { key: "tubelessTyre", label: "Tubeless Tyre" },
+  { key: "usbChargingPort", label: "USB Charging Port" },
+  { key: "brightHeadlamp", label: "Bright Headlamp" },
+  { key: "drlLights", label: "DRL Lights" },
+  { key: "digitalMeter", label: "Digital Meter" },
+];
+
+export function defaultSpecIconImages(): BrochureSpecIconImages {
+  return {
+    alloyWheels: "",
+    discBrake: "",
+    largeBoot: "",
+    tubelessTyre: "",
+    usbChargingPort: "",
+    brightHeadlamp: "",
+    drlLights: "",
+    digitalMeter: "",
+  };
+}
 
 export const KEY_FEATURE_LABELS: { key: keyof ProductBrochure["keyFeatures"]; label: string }[] = [
   { key: "antiTheftAlarm", label: "Anti Theft Alarm" },
@@ -98,6 +125,7 @@ export function defaultBrochure(): ProductBrochure {
     chargingTimeLeadAcid: "6-8 hrs",
     headLight: "LED Headlamp",
     highlightFeatures: [...DEFAULT_HIGHLIGHT_FEATURES],
+    specIconImages: defaultSpecIconImages(),
   };
 }
 
@@ -159,6 +187,10 @@ export function normalizeBrochure(input?: Partial<ProductBrochure> | null): Prod
     highlightFeatures: Array.isArray(input.highlightFeatures)
       ? input.highlightFeatures.map((f) => String(f).trim()).filter(Boolean)
       : base.highlightFeatures,
+    specIconImages: {
+      ...base.specIconImages,
+      ...(input.specIconImages || {}),
+    },
     keyFeatures: {
       ...base.keyFeatures,
       ...(input.keyFeatures || {}),

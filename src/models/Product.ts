@@ -114,6 +114,22 @@ const BrochureSchema = new Schema(
     chargingTimeLeadAcid: { type: String, default: "" },
     headLight: { type: String, default: "" },
     highlightFeatures: { type: [String], default: [] },
+    specIconImages: {
+      type: new Schema(
+        {
+          alloyWheels: { type: String, default: "" },
+          discBrake: { type: String, default: "" },
+          largeBoot: { type: String, default: "" },
+          tubelessTyre: { type: String, default: "" },
+          usbChargingPort: { type: String, default: "" },
+          brightHeadlamp: { type: String, default: "" },
+          drlLights: { type: String, default: "" },
+          digitalMeter: { type: String, default: "" },
+        },
+        { _id: false }
+      ),
+      default: () => ({}),
+    },
   },
   { _id: false }
 );

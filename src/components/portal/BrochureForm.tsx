@@ -7,6 +7,7 @@ import {
   BRAKE_SYSTEM_OPTIONS,
   HEADLIGHT_OPTIONS,
   KEY_FEATURE_LABELS,
+  SPEC_ICON_CATEGORIES,
   SPEED_CATEGORY_OPTIONS,
   SPEEDOMETER_OPTIONS,
   TYRE_OPTIONS,
@@ -502,9 +503,35 @@ export default function BrochureForm({ brochure, onChange }: Props) {
       </div>
 
       <div className="rounded-xl border border-[#E6E6E6] bg-[#FAFAFA] p-4">
+        <p className="mb-1 text-sm font-bold text-[#111]">Specification icons</p>
+        <p className="mb-4 text-xs text-[#888]">
+          Upload an icon image for each fixed category. These appear as larger circular icons on the brochure specifications page.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {SPEC_ICON_CATEGORIES.map(({ key, label }) => (
+            <ImageUploadField
+              key={key}
+              label={label}
+              value={brochure.specIconImages?.[key] || ""}
+              folder="tiger-rydo/products/spec-icons"
+              hint="Square PNG/JPG works best"
+              onChange={(url) =>
+                patch({
+                  specIconImages: {
+                    ...brochure.specIconImages,
+                    [key]: url,
+                  },
+                })
+              }
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[#E6E6E6] bg-[#FAFAFA] p-4">
         <p className="mb-3 text-sm font-bold text-[#111]">Highlight feature chips</p>
         <p className="mb-3 text-xs text-[#888]">
-          Shown as feature icons/labels on the brochure (Efficient Batteries, Quick Charge, etc.).
+          Extra short highlights shown on the story page (optional). Spec page icons above are fixed.
         </p>
         <div className="mb-3 flex flex-wrap gap-2">
           <input

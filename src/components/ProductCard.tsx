@@ -12,25 +12,32 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const lowestPrice = getLowestPrice(product);
   const variantCount = product.batteryVariants.length;
+  const href = `/products/${product.slug}`;
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#E6E6E6] bg-white transition-all hover:border-[#FF5A00]/30 hover:shadow-xl">
+    <Link
+      href={href}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#E6E6E6] bg-white transition-all hover:border-[#FF5A00]/30 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A00]"
+      aria-label={`View details for ${product.name}`}
+    >
       {product.featured && (
         <span className="absolute top-4 right-4 z-10 rounded-full bg-[#FF5A00] px-3 py-1 text-xs font-bold text-white">
           FEATURED
         </span>
       )}
 
-      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-[#0A0A0A]">        {product.imageUrl ? (
-        <Image
-          src={product.imageUrl}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-contain p-4 transition-transform duration-300 group-hover:scale-105" />
-      ) : (
-        <MiniScooterSvg />
-      )}
+      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-[#0A0A0A]">
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <MiniScooterSvg />
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-6">
@@ -46,7 +53,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="mt-4 flex items-center gap-2 text-sm text-[#2B2B2B]">
           <Battery className="h-4 w-4 text-[#FF5A00]" />
-          <span>{variantCount} Battery Variant{variantCount > 1 ? "s" : ""}</span>
+          <span>
+            {variantCount} Battery Variant{variantCount > 1 ? "s" : ""}
+          </span>
         </div>
 
         <div className="mt-2 flex flex-wrap gap-2">
@@ -67,15 +76,13 @@ export default function ProductCard({ product }: ProductCardProps) {
               {formatPrice(lowestPrice)}
             </p>
           </div>
-          <Link href={`/products/${product.slug}`}>
-            <Button size="sm" className="group/btn">
-              View Details
-              <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover/btn:translate-x-1" />
-            </Button>
-          </Link>
+          <Button size="sm" className="group/btn pointer-events-none">
+            View Details
+            <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover/btn:translate-x-1" />
+          </Button>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
 

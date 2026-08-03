@@ -1,5 +1,5 @@
 import type { Product } from "@/lib/types";
-import { KEY_FEATURE_LABELS, normalizeBrochure, speedCategoryLabel } from "@/lib/brochure";
+import { KEY_FEATURE_LABELS, normalizeBrochure, SPEC_ICON_CATEGORIES, speedCategoryLabel } from "@/lib/brochure";
 import { getLowestPrice } from "@/lib/product-utils";
 
 type JsPdfDoc = InstanceType<typeof import("jspdf").jsPDF>;
@@ -16,9 +16,9 @@ const DIVIDER: [number, number, number] = [230, 230, 230];
 const PANEL_DARK: [number, number, number] = [23, 19, 15];
 const CARD_RADIUS = 3;
 const DIVIDER_WEIGHT = 0.3;
-const ICON_STROKE = 0.6;
+const ICON_STROKE = 0.7;
 const ICON_RADIUS_SM = 3.4;
-const ICON_RADIUS_LG = 4.2;
+const ICON_RADIUS_LG = 7.2;
 
 function g(steps: number): number { return steps * 2.82; }
 
@@ -451,39 +451,53 @@ async function renderSpecs(doc: JsPdfDoc, brochure: ReturnType<typeof normalizeB
     });
   });
 
-  // Feature icon grid — 2 rows x 4 columns
-  const iconTop = cardTop + cardH * 2 + cardGap * 2 + g(2);
-  const iconItems = brochure.highlightFeatures.length >= 8
-    ? brochure.highlightFeatures.slice(0, 8)
-    : ["Efficient Batteries", "Digital Meter", "Bright Headlamp", "Hydraulic Suspension",
-       "USB Charging", "Disc Brake", "Quick Charge", "Tubeless Tyre"];
+  // Feature icon grid — 2 rows x 4 columns with uploaded images
+  const iconTop = cardTop + cardH * 2 + cardGap * 2 + g(1.5);
   const iconCols = 4;
   const iconCellW = s.w / iconCols;
-  const iconRowH = g(7.5);
+  const iconRowH = g(10.5);
+  const iconRadius = ICON_RADIUS_LG;
+  const iconImgSize = iconRadius * 1.45;
 
-  for (let i = 0; i < 8; i++) {
+  const iconEntries = await Promise.all(
+    SPEC_ICON_CATEGORIES.map(async (cat) => {
+      const url = brochure.specIconImages?.[cat.key] || "";
+      const src = url ? await fetchImage(url) : null;
+      return { label: cat.label, src };
+    })
+  );
+
+  for (let i = 0; i < iconEntries.length; i++) {
     const col = i % iconCols;
     const row = Math.floor(i / iconCols);
     const ix = s.x + col * iconCellW + iconCellW / 2;
     const iy = iconTop + row * iconRowH;
+    const circleY = iy + g(2.2);
 
-    // Circle — consistent stroke, size, color
+    // Soft fill behind icon
+    doc.setFillColor(250, 250, 250);
+    doc.circle(ix, circleY, iconRadius, "F");
+
+    if (iconEntries[i].src) {
+      await drawImg(doc, iconEntries[i].src!, {
+        x: ix - iconImgSize / 2,
+        y: circleY - iconImgSize / 2,
+        w: iconImgSize,
+        h: iconImgSize,
+      });
+    }
+
+    // Orange circle stroke
     doc.setDrawColor(...ACCENT);
     doc.setLineWidth(ICON_STROKE);
-    doc.circle(ix, iy + g(1.8), ICON_RADIUS_LG, "S");
+    doc.circle(ix, circleY, iconRadius, "S");
 
-    // Title — aligned to circle center
+    // Title
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setTextColor(...TEXT_PRIMARY);
-    const lines = wrap(doc, iconItems[i] || "", iconCellW - g(2), 2);
-    doc.text(lines, ix, iy + g(4.5), { align: "center" });
-
-    // Subtitle — aligned under title
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6);
-    doc.setTextColor(...TEXT_SECONDARY);
-    doc.text("Standard", ix, iy + g(6), { align: "center" });
+    const lines = wrap(doc, iconEntries[i].label, iconCellW - g(1.5), 2);
+    doc.text(lines, ix, circleY + iconRadius + g(1.8), { align: "center" });
   }
 
   drawFooter(doc, s, brand, brochure.website || "");
